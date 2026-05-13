@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Socket Test</title>
+</head>
+<body>
+  <h2>Socket Test</h2>
+
+  <input id="userId" placeholder="Enter User ID" />
+  <button onclick="joinUser()">Join</button>
+
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<script>
+  console.log("Script loaded");
+
+  const socket = io("http://localhost:5000");
+
+  socket.on("connect", () => {
+    console.log("Connected:", socket.id);
+  });
+
+  function joinUser() {
+    const userId = document.getElementById("userId").value;
+
+    socket.emit("joinUser", userId);
+
+    console.log("Joined as:", userId);
+  }
+
+  socket.on("newMessage", (data) => {
+    console.log("🔥 New Message:", data.text);
+  });
+</script>
+</body>
+</html>

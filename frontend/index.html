@@ -1,0 +1,1213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>StealthChat</title>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<style>
+body { 
+  margin: 0; 
+  display: flex; 
+  height: 100vh; 
+  font-family: Arial, sans-serif; 
+  background: #0f172a; 
+  color: #f1f5f9;
+  overflow: hidden;
+}
+.sidebar { 
+  width: 30%; 
+  min-width: 260px;
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); 
+  padding: 20px; 
+  overflow-y: auto;
+  border-right: 1px solid #334155;
+  box-sizing: border-box;
+}
+.chat { width:70%; display:flex; flex-direction:column; background:#111827; }
+.messages { 
+  flex:1; 
+  padding:20px; 
+  overflow:auto; 
+  background:#0f172a;
+}
+.message { 
+  padding:12px 16px; 
+  margin:8px 0; 
+  border-radius:18px; 
+  max-width:70%; 
+  word-wrap:break-word;
+  animation: slideIn 0.3s ease;
+  position: relative;
+}
+@keyframes slideIn {
+  from { opacity:0; transform:translateY(20px); }
+  to { opacity:1; transform:translateY(0); }
+}
+.sent { 
+  background:linear-gradient(135deg, #3b82f6, #1d4ed8); 
+  margin-left:auto; 
+  color:white;
+  border-bottom-right-radius:4px;
+}
+.received { 
+  background:#1e293b; 
+  color:#f1f5f9;
+  border-bottom-left-radius:4px;
+}
+.input { 
+  display:flex; 
+  padding:20px; 
+  background:#111827;
+  border-top:1px solid #334155;
+}
+.input input { 
+  flex:1; 
+  padding:14px 18px; 
+  border:none; 
+  border-radius:25px; 
+  background:#1e293b;
+  color:#f1f5f9;
+  outline:none;
+  margin-right:10px;
+  width: auto;
+}
+.input button {
+  padding:14px 24px;
+  background:linear-gradient(135deg, #10b981, #059669);
+  color:white;
+  border:none;
+  border-radius:25px;
+  cursor:pointer;
+  font-weight:bold;
+  width: auto;
+}
+input, button { font-size:14px; }
+h3 { margin:0 0 15px 0; color:#f1f5f9; font-size:16px; }
+h4 { margin:10px 0 8px 0; color:#94a3b8; font-size:14px; font-weight:500; }
+hr { border:none; height:1px; background:#334155; margin:20px 0; }
+button { 
+  width:100%; 
+  padding:12px; 
+  margin:5px 0; 
+  background:#3b82f6; 
+  color:white; 
+  border:none; 
+  border-radius:8px; 
+  cursor:pointer;
+  font-weight:500;
+}
+button:hover { background:#2563eb; }
+input { 
+  width:100%; 
+  padding:10px; 
+  margin:5px 0; 
+  background:#334155; 
+  border:none; 
+  border-radius:8px; 
+  color:#f1f5f9;
+  box-sizing:border-box;
+}
+.member-tag {
+  display:inline-block;
+  padding:4px 10px;
+  margin:2px;
+  border-radius:12px;
+  font-size:12px;
+  font-weight:500;
+}
+.group-tag { background:#059669; color:white; }
+.visible-tag { background:#3b82f6; color:white; }
+.visibility-btn { 
+  background:#10b981 !important; 
+  font-size:12px;
+  margin-top:10px;
+}
+.visibility-btn:hover { background:#059669 !important; }
+
+/* Emoji reactions */
+.msg-body { position: relative; }
+.emoji-picker {
+  position: absolute;
+  top: -42px;
+  right: 0;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 4px 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+  z-index: 100;
+  white-space: nowrap;
+}
+.sent .emoji-picker { right: 0; left: auto; }
+.received .emoji-picker { left: 0; right: auto; }
+.emoji-btn {
+  font-size: 18px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 6px;
+  transition: transform 0.1s;
+  line-height: 1;
+}
+.emoji-btn:hover { transform: scale(1.3); }
+.reaction-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.reaction-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.reaction-chip:hover { background: #475569; transform: scale(1.05); }
+.reaction-chip.mine {
+  background: #1e3a5f;
+  border-color: #3b82f6;
+  color: #93c5fd;
+}
+#typingIndicator {
+  padding: 6px 24px 2px 24px;
+  min-height: 28px;
+  background: #0f172a;
+  color: #94a3b8;
+  font-size: 13px;
+  font-style: italic;
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+.typing-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.typing-dots span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #94a3b8;
+  animation: bounce 1.2s infinite;
+  display: inline-block;
+}
+
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%            { transform: translateY(-5px); opacity: 1; }
+}
+/* Online presence dots */
+.member-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 2px;
+}
+.presence-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #475569;   /* offline = gray */
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+.presence-dot.online {
+  background: #10b981;   /* online = green */
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(16,185,129,0.4); }
+  50%       { box-shadow: 0 0 10px rgba(16,185,129,0.8); }
+}
+/* Schedule button */
+#scheduleBtn {
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-right: 8px;
+  transition: background 0.2s;
+  padding: 0;
+}
+#scheduleBtn:hover { background: #6d28d9; }
+
+/* Scheduled badge on messages */
+.scheduled-badge {
+  display: inline-block;
+  background: #7c3aed;
+  color: white;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+/* Scheduled messages panel */
+#scheduledPanel {
+  display: none;
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 320px;
+  max-height: 400px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 16px;
+  z-index: 1000;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+#scheduledPanel h4 {
+  margin: 0 0 12px 0;
+  color: #f1f5f9;
+  font-size: 15px;
+}
+.scheduled-item {
+  background: #334155;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 6px 0;
+  font-size: 13px;
+}
+.scheduled-item .sched-text {
+  color: #f1f5f9;
+  margin-bottom: 4px;
+  word-break: break-word;
+}
+.scheduled-item .sched-time {
+  color: #94a3b8;
+  font-size: 12px;
+}
+.scheduled-item .sched-cancel {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  margin-top: 6px;
+  width: auto;
+}
+.scheduled-item .sched-cancel:hover { background: #dc2626; }
+
+/* Date/time picker modal */
+#scheduleModal {
+  display: none;
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 300px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 16px;
+  padding: 20px;
+  z-index: 1001;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+}
+#scheduleModal h4 {
+  margin: 0 0 12px 0;
+  color: #f1f5f9;
+  font-size: 15px;
+}
+#scheduleDateTime {
+  width: 100%;
+  padding: 10px;
+  background: #334155;
+  border: 1px solid #475569;
+  border-radius: 8px;
+  color: #f1f5f9;
+  font-size: 14px;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- SPLASH -->
+<div id="splash" style="position:fixed;width:100%;height:100%;background:linear-gradient(135deg,#1e293b,#0f172a);color:#3b82f6;display:flex;justify-content:center;align-items:center;font-size:48px;font-weight:bold;text-shadow:0 0 20px rgba(59,130,246,0.5);z-index:1000;">
+  StealthChat
+</div>
+
+<div class="sidebar">
+  <h3>Authentication</h3>
+  <input id="email" placeholder="Email">
+  <input id="password" type="password" placeholder="Password">
+  <button onclick="signup()">Signup</button>
+  <button onclick="login()">Login</button>
+  
+  <hr>
+
+  <h4>Create Group</h4>
+  <input id="groupName" placeholder="Group Name">
+  <button onclick="createGroup()">Create Group</button>
+
+  <h3>My Groups</h3>
+  <div id="groupList" style="max-height:200px;overflow:auto;"></div>
+
+  <hr>
+
+  <div id="groupInfo" style="display:none;">
+    <h4>Group Members</h4>
+    <div id="groupMembers" style="max-height:120px;overflow:auto;padding:10px;background:#1e293b;border-radius:8px;"></div>
+
+    <h4>Visible To (Message Privacy)</h4>
+    <div id="visibleMembers" style="max-height:100px;overflow:auto;padding:10px;background:#1e293b;border-radius:8px;"></div>
+
+    <input id="newMember" placeholder="Add Member ID">
+    <button onclick="addMemberToGroup()" style="background:#f59e0b;margin-top:8px;">Add to Group</button>
+    <button onclick="toggleMemberVisibility()" class="visibility-btn">Toggle Message Privacy</button>
+    <button onclick="toggleScheduledPanel()"
+  style="background:#7c3aed;margin-top:8px;">
+  ⏰ View Scheduled
+</button>
+  </div>
+</div>
+
+<div class="chat">
+  <div id="messages" class="messages"></div>
+  <div id="typingIndicator"></div>
+
+  <!-- Scheduled messages panel -->
+  <div id="scheduledPanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <h4 style="margin:0;">⏰ Scheduled Messages</h4>
+      <span onclick="toggleScheduledPanel()"
+            style="cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;">✕</span>
+    </div>
+    <div id="scheduledList"></div>
+  </div>
+
+  <!-- Schedule time picker -->
+  <div id="scheduleModal">
+    <h4>⏰ Schedule Message</h4>
+    <p style="color:#94a3b8;font-size:13px;margin:0 0 10px 0;">
+      Message: "<span id="schedulePreview" style="color:#f1f5f9;"></span>"
+    </p>
+    <input type="datetime-local" id="scheduleDateTime">
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmSchedule()"
+        style="flex:1;background:#7c3aed;color:white;padding:10px;border:none;
+               border-radius:8px;cursor:pointer;font-weight:bold;">
+        Schedule
+      </button>
+      <button onclick="closeScheduleModal()"
+        style="flex:1;background:#475569;color:white;padding:10px;border:none;
+               border-radius:8px;cursor:pointer;">
+        Cancel
+      </button>
+    </div>
+  </div>
+
+  <div class="input">
+    <input id="msg" placeholder="Type a stealth message...">
+    <button id="scheduleBtn" onclick="openScheduleModal()" title="Schedule message">⏰</button>
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+// ─── Splash ───────────────────────────────────────────────
+setTimeout(function() {
+  var splash = document.getElementById("splash");
+  splash.style.transition = "opacity 0.5s ease";
+  splash.style.opacity = "0";
+  setTimeout(function() { splash.style.display = "none"; }, 500);
+}, 2500);
+
+// ─── State ────────────────────────────────────────────────
+var socket;
+var token = "";
+var currentUserName = "";
+var currentUser = "";
+var currentGroup = "";
+var privacySelections = {};
+var typingUsers = {};      // { userId: { name, timer } }
+var typingTimeout = null;  // debounce timer for outgoing typing events
+var isTyping = false;      // tracks if WE are currently flagged as typing
+var EMOJI_LIST = ["👍","❤️","😂","😮","😢","🔥","👀","🤝"];
+var onlineUserIds = new Set(); // tracks who is currently online
+// ─── Scheduled Messages ───────────────────────────────────
+var pendingScheduleText = "";
+
+function openScheduleModal() {
+  var msgInput = document.getElementById("msg");
+  var text = msgInput.value.trim();
+  if (!currentGroup) return alert("Select a group first");
+  if (!text) return alert("Type a message first, then click the clock to schedule it");
+
+  pendingScheduleText = text;
+
+  // Show preview (truncated)
+  var preview = text.length > 40 ? text.slice(0, 40) + "..." : text;
+  document.getElementById("schedulePreview").textContent = preview;
+
+  // Default to 1 hour from now
+  var defaultTime = new Date(Date.now() + 60 * 60 * 1000);
+  var localISO = new Date(defaultTime.getTime() - defaultTime.getTimezoneOffset() * 60000)
+    .toISOString().slice(0, 16);
+  document.getElementById("scheduleDateTime").value = localISO;
+  document.getElementById("scheduleDateTime").min = new Date(Date.now() + 60000 - 
+    new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+  document.getElementById("scheduleModal").style.display = "block";
+}
+
+function closeScheduleModal() {
+  document.getElementById("scheduleModal").style.display = "none";
+  pendingScheduleText = "";
+}
+
+function confirmSchedule() {
+  var dateVal = document.getElementById("scheduleDateTime").value;
+  if (!dateVal) return alert("Pick a date and time");
+
+  var revealAt = new Date(dateVal);
+  if (revealAt <= new Date()) return alert("Pick a time in the future");
+
+  // Send to server as scheduled
+  fetch("http://localhost:5000/api/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + token
+    },
+    body: JSON.stringify({
+      groupId:  currentGroup,
+      text:     pendingScheduleText,
+      revealAt: revealAt.toISOString()
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    if (data.scheduled) {
+      var timeStr = revealAt.toLocaleString([], {
+        month:  "short", day: "numeric",
+        hour:   "2-digit", minute: "2-digit"
+      });
+      alert("Scheduled for " + timeStr);
+      document.getElementById("msg").value = "";
+      closeScheduleModal();
+      // Refresh scheduled panel if open
+      if (document.getElementById("scheduledPanel").style.display === "block") {
+        loadScheduledMessages();
+      }
+    }
+  })
+  .catch(function(err) { alert("Schedule error: " + err.message); });
+}
+
+function toggleScheduledPanel() {
+  var panel = document.getElementById("scheduledPanel");
+  if (panel.style.display === "block") {
+    panel.style.display = "none";
+  } else {
+    panel.style.display = "block";
+    loadScheduledMessages();
+  }
+}
+
+function loadScheduledMessages() {
+  if (!currentGroup || !token) return;
+  fetch("http://localhost:5000/api/messages/scheduled/" + currentGroup, {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(messages) {
+    var list = document.getElementById("scheduledList");
+    if (!messages.length) {
+      list.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;">No scheduled messages</p>';
+      return;
+    }
+    list.innerHTML = "";
+    messages.forEach(function(msg) {
+      var revealDate = new Date(msg.revealAt).toLocaleString([], {
+        month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit"
+      });
+      var item = document.createElement("div");
+      item.className = "scheduled-item";
+      item.innerHTML =
+        '<div class="sched-text">' + msg.text + '</div>' +
+        '<div class="sched-time">Sends at: ' + revealDate + '</div>' +
+        '<button class="sched-cancel" onclick="cancelScheduled(\'' + msg._id + '\')">Cancel</button>';
+      list.appendChild(item);
+    });
+  })
+  .catch(function(err) { console.error("Load scheduled error:", err); });
+}
+
+function cancelScheduled(messageId) {
+  if (!confirm("Cancel this scheduled message?")) return;
+  fetch("http://localhost:5000/api/messages/scheduled/" + messageId, {
+    method: "DELETE",
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) {
+    if (res.ok) {
+      alert("Scheduled message cancelled");
+      loadScheduledMessages();
+    }
+  })
+  .catch(function(err) { alert("Error: " + err.message); });
+}
+
+// ─── Auth ─────────────────────────────────────────────────
+async function signup() {
+  var emailVal = document.getElementById("email").value;
+  var passVal  = document.getElementById("password").value;
+  if (!emailVal || !passVal) return alert("Enter email and password");
+
+  try {
+    var res = await fetch("http://localhost:5000/api/auth/signup", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: emailVal.split("@")[0],
+        email: emailVal,
+        password: passVal
+      })
+    });
+    var data = await res.json();
+    if (res.status !== 201) return alert(data.message || "Signup failed");
+    alert("Signup success");
+  } catch(err) {
+    alert("Signup error: " + err.message);
+  }
+}
+
+async function login() {
+  var emailVal = document.getElementById("email").value;
+  var passVal  = document.getElementById("password").value;
+
+  try {
+    var res = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: emailVal, password: passVal })
+    });
+    var data = await res.json();
+    if (res.status !== 200) return alert(data.message || "Login failed");
+    
+    token = data.token;
+    currentUser = data.user._id;
+    currentUserName = data.user.name || data.user.email || "Someone";  
+    alert("Login success");
+    loadGroups();
+  } catch(err) {
+    alert("Login error: " + err.message);
+  }
+}
+
+// ─── Groups ───────────────────────────────────────────────
+async function loadGroups() {
+  if (!token) return;
+  try {
+    var res = await fetch("http://localhost:5000/api/groups/my", {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    var groups = await res.json();
+    if (res.status !== 200) return console.error("Groups error:", groups);
+
+    var groupList = document.getElementById("groupList");
+    groupList.innerHTML = "";
+
+    groups.forEach(function(g) {
+      var div = document.createElement("div");
+      div.textContent = g.name + " (" + g.members.length + " members)";
+      div.style.cssText = "cursor:pointer;padding:12px;background:" +
+        (currentGroup === g._id ? "#3b82f6" : "#334155") +
+        ";margin:4px 0;border-radius:12px;transition:all 0.2s;";
+      div.onmouseover = function() {
+        if (currentGroup !== g._id) div.style.background = "#475569";
+      };
+      div.onmouseout = function() {
+        if (currentGroup !== g._id) div.style.background = "#334155";
+      };
+      div.onclick = function() { connectGroup(g._id); };
+      groupList.appendChild(div);
+    });
+  } catch(err) {
+    console.error("Load groups error:", err);
+  }
+}
+
+async function createGroup() {
+  var nameVal = document.getElementById("groupName").value.trim();
+  if (!token || !nameVal) return alert("Login and enter a group name");
+  try {
+    var res = await fetch("http://localhost:5000/api/groups", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ name: nameVal })
+    });
+    if (res.ok) {
+      alert("Group created");
+      document.getElementById("groupName").value = "";
+      loadGroups();
+    }
+  } catch(err) {
+    alert("Create error: " + err.message);
+  }
+}
+
+async function connectGroup(groupId) {
+  typingUsers = {};
+  isTyping = false;
+  clearTimeout(typingTimeout);
+  updateTypingIndicator();
+  currentGroup = groupId;
+  loadGroups();
+  document.getElementById("groupInfo").style.display = "block";
+  await loadMessages();
+  await loadGroupMembers();
+
+  if (socket) socket.disconnect();
+  socket = io("http://localhost:5000");
+  socket.emit("joinUser", currentUser);
+  socket.emit("joinGroup", currentGroup);
+  // Request current online users when joining
+socket.emit("getOnlineUsers");
+
+socket.on("onlineUsersList", function(data) {
+  onlineUserIds = new Set(data.userIds);
+  console.log("Online users:", data.userIds.length);
+  updateAllPresenceDots();
+});
+
+socket.on("userOnline", function(data) {
+  onlineUserIds.add(data.userId);
+  updatePresenceDot(data.userId, true);
+});
+
+socket.on("userOffline", function(data) {
+  onlineUserIds.delete(data.userId);
+  updatePresenceDot(data.userId, false);
+});
+  socket.on("newMessage", function(msg) {
+    if (shouldSeeMessage(msg)) render(msg);
+  });
+  socket.on("userTyping", function(data) {
+  // Start a self-clearing timer per user
+  if (typingUsers[data.userId]) {
+    clearTimeout(typingUsers[data.userId].timer);
+  }
+
+  typingUsers[data.userId] = {
+    name: data.name || "Someone",
+    // Auto-clear if stopTyping never arrives (safety net)
+    timer: setTimeout(function() {
+      delete typingUsers[data.userId];
+      updateTypingIndicator();
+    }, 3000)
+  };
+
+  updateTypingIndicator();
+});
+
+socket.on("userStopTyping", function(data) {
+  if (typingUsers[data.userId]) {
+    clearTimeout(typingUsers[data.userId].timer);
+    delete typingUsers[data.userId];
+  }
+  updateTypingIndicator();
+});
+  socket.on("reactionUpdate", function(data) {
+    var bar = document.getElementById("reactions-" + data.messageId);
+    if (bar) bar.innerHTML = buildReactionHTML(data.reactions, data.messageId);
+  });
+}
+function updatePresenceDot(userId, isOnline) {
+  // Update dot in group members panel
+  var dot = document.getElementById("dot-" + userId);
+  if (dot) {
+    if (isOnline) {
+      dot.classList.add("online");
+      dot.title = "Online";
+    } else {
+      dot.classList.remove("online");
+      dot.title = "Offline";
+    }
+  }
+
+  // Update dot in message sender names
+  var msgDot = document.getElementById("msgdot-" + userId);
+  if (msgDot) {
+    if (isOnline) {
+      msgDot.classList.add("online");
+    } else {
+      msgDot.classList.remove("online");
+    }
+  }
+}
+
+function updateAllPresenceDots() {
+  // Re-render the members panel with fresh online status
+  loadGroupMembers();
+}
+// ─── Members ──────────────────────────────────────────────
+async function loadGroupMembers() {
+  if (!currentGroup || !token) return;
+  fetch("http://localhost:5000/api/groups/" + currentGroup, {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(group) {
+    var membersDiv = document.getElementById("groupMembers");
+    membersDiv.innerHTML = "";
+
+    (group.members || []).forEach(function(member) {
+      var id      = (member._id || member).toString();
+      var name    = member.name || ("..." + id.slice(-8));
+      var isOnline = onlineUserIds.has(id);
+      var isMe    = (id === currentUser);
+
+      // Wrapper with dot + name tag
+      var wrapper = document.createElement("div");
+      wrapper.className = "member-wrapper";
+
+      var dot = document.createElement("span");
+      dot.className = "presence-dot" + (isOnline ? " online" : "");
+      dot.id = "dot-" + id;
+      dot.title = isOnline ? "Online" : "Offline";
+
+      var tag = document.createElement("span");
+      tag.className = "member-tag group-tag";
+      tag.textContent = name + (isMe ? " (you)" : "");
+
+      wrapper.appendChild(dot);
+      wrapper.appendChild(tag);
+      membersDiv.appendChild(wrapper);
+    });
+
+    // Visible members section (unchanged)
+    var visibleDiv = document.getElementById("visibleMembers");
+    if (group.visibleMembers && group.visibleMembers.length > 0) {
+      var tags = group.visibleMembers.map(function(member) {
+        var id   = (member._id || member).toString();
+        var name = member.name || ("..." + id.slice(-8));
+        return '<span class="member-tag visible-tag">' + name + '</span>';
+      }).join("");
+      visibleDiv.innerHTML =
+        '<div style="color:#3b82f6;font-weight:bold;margin-bottom:6px;">PRIVATE: ' +
+        group.visibleMembers.length + ' members only</div>' + tags;
+    } else {
+      visibleDiv.innerHTML = '<span style="color:#10b981;">PUBLIC: Everyone in group</span>';
+    }
+  })
+  .catch(function(err) { console.error("Load members error:", err); });
+}
+async function addMemberToGroup() {
+  var newMemberVal = document.getElementById("newMember").value.trim();
+  if (!currentGroup || !newMemberVal) return alert("Select group and enter member ID");
+  try {
+    await fetch("http://localhost:5000/api/groups/add-member", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ groupId: currentGroup, userId: newMemberVal })
+    });
+    alert("Member added");
+    document.getElementById("newMember").value = "";
+    loadGroupMembers();
+  } catch(err) {
+    alert("Error: " + err.message);
+  }
+}
+
+// ─── Privacy Modal ────────────────────────────────────────
+async function toggleMemberVisibility() {
+  if (!currentGroup) return alert("Select a group first");
+  closePrivacyModal();
+
+  var res = await fetch("http://localhost:5000/api/groups/" + currentGroup, {
+    headers: { "Authorization": "Bearer " + token }
+  });
+  var group = await res.json();
+
+  privacySelections = {};
+  (group.visibleMembers || []).forEach(function(m) {
+    var id = (m._id || m).toString();
+    privacySelections[id] = true;
+  });
+
+  var overlay = document.createElement("div");
+  overlay.id = "privacyModal";
+  overlay.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;" +
+    "background:rgba(0,0,0,0.85);display:flex;align-items:center;" +
+    "justify-content:center;z-index:99999;";
+
+  var box = document.createElement("div");
+  box.style.cssText = "background:#1e293b;border-radius:16px;padding:28px;" +
+    "width:340px;max-height:80vh;overflow-y:auto;color:#f1f5f9;";
+
+  var membersHtml = (group.members || []).map(function(member) {
+    var id        = (member._id || member).toString();
+    var shortId   = id.slice(-8);
+    var isMe      = (id === currentUser);
+    var name      = member.name || ("..." + shortId);
+    var isChecked = privacySelections[id] ? "checked" : "";
+    return (
+      '<label style="display:flex;align-items:center;gap:12px;padding:10px 12px;' +
+      'background:#334155;border-radius:8px;margin:6px 0;cursor:pointer;">' +
+      '<input type="checkbox" value="' + id + '" ' + isChecked +
+      ' onchange="togglePrivacySelection(this.value, this.checked)"' +
+      ' style="width:18px;height:18px;cursor:pointer;accent-color:#10b981;">' +
+      '<span style="font-size:14px;">' + name +
+      (isMe ? ' <span style="color:#10b981;font-size:12px;">(you)</span>' : '') +
+      '</span></label>'
+    );
+  }).join("");
+
+  box.innerHTML =
+    '<h3 style="margin:0 0 8px 0;font-size:18px;">Message Privacy</h3>' +
+    '<p style="color:#94a3b8;font-size:13px;margin:0 0 16px 0;">' +
+    'Check who can see messages. Leave all unchecked = everyone sees.</p>' +
+    '<div id="memberCheckboxes">' + membersHtml + '</div>' +
+    '<div style="display:flex;gap:10px;margin-top:20px;">' +
+    '<button onclick="savePrivacySelection()" style="flex:1;background:#10b981;color:white;' +
+    'padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">' +
+    'Save</button>' +
+    '<button onclick="closePrivacyModal()" style="flex:1;background:#ef4444;color:white;' +
+    'padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">' +
+    'Cancel</button></div>';
+
+  overlay.addEventListener("click", function(e) {
+    if (e.target === overlay) closePrivacyModal();
+  });
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function closePrivacyModal() {
+  var modal = document.getElementById("privacyModal");
+  if (modal) modal.remove();
+}
+
+function togglePrivacySelection(memberId, checked) {
+  if (checked) {
+    privacySelections[memberId] = true;
+  } else {
+    delete privacySelections[memberId];
+  }
+}
+
+async function savePrivacySelection() {
+  var selectedIds = Object.keys(privacySelections);
+  try {
+    var res = await fetch("http://localhost:5000/api/groups/" + currentGroup + "/visibility", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ visibleMembers: selectedIds })
+    });
+    if (!res.ok) return alert("Failed to save");
+
+    if (selectedIds.length === 0) {
+      alert("Public - everyone sees messages");
+    } else {
+      alert("Private - only " + selectedIds.length + " member(s) see new messages");
+    }
+    closePrivacyModal();
+    loadGroupMembers();
+  } catch(err) {
+    alert("Error: " + err.message);
+  }
+}
+
+// ─── Messages ─────────────────────────────────────────────
+function shouldSeeMessage(msg) {
+  if (!msg.visibleTo || msg.visibleTo.length === 0) return true;
+  return msg.visibleTo.some(function(id) {
+    return (id && id.toString()) === currentUser;
+  });
+}
+
+async function loadMessages() {
+  if (!currentGroup || !token) return;
+  try {
+    var res = await fetch("http://localhost:5000/api/messages/" + currentGroup, {
+      headers: { "Authorization": "Bearer " + token }
+    });
+    var data = await res.json();
+    var messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
+    if (Array.isArray(data)) {
+      data.filter(shouldSeeMessage).forEach(function(msg) { render(msg); });
+    }
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  } catch(err) {
+    console.error("Load messages error:", err);
+  }
+}
+
+async function sendMessage() {
+  var msgInput = document.getElementById("msg");
+  if (!currentGroup || !msgInput.value.trim()) return;
+   // ✅ ADD — stop typing indicator when message is sent
+  isTyping = false;
+  clearTimeout(typingTimeout);
+  if (socket) socket.emit("stopTyping", { groupId: currentGroup, userId: currentUser });
+
+  try {
+    var res = await fetch("http://localhost:5000/api/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ groupId: currentGroup, text: msgInput.value })
+    });
+    if (res.ok) msgInput.value = "";
+  } catch(err) {
+    console.error("Send error:", err);
+  }
+}
+
+// Enter key to send
+document.getElementById("msg").addEventListener("keypress", function(e) {
+  if (e.key === "Enter") {sendMessage();
+  return;
+  }
+handleTyping();
+});
+document.getElementById("msg").addEventListener("keydown", function(e) {
+  if (e.key !== "Enter") handleTyping();
+});
+function handleTyping() {
+  if (!socket || !currentGroup || !currentUser) return;
+  console.log("Typing as:", currentUserName);
+  // Emit typing start only once until they stop
+  if (!isTyping) {
+    isTyping = true;
+    socket.emit("typing", {
+      groupId: currentGroup,
+      userId: currentUser,
+      name: currentUserName   // we'll set this at login — see Step 6
+    });
+  }
+
+  // Reset the stop-typing timer on every keystroke
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(function() {
+    isTyping = false;
+    socket.emit("stopTyping", {
+      groupId: currentGroup,
+      userId: currentUser
+    });
+  }, 1500);  // stop typing after 1.5s of no keypresses
+}
+
+function updateTypingIndicator() {
+  var indicator = document.getElementById("typingIndicator");
+  var names = Object.values(typingUsers).map(function(u) { return u.name; });
+
+  if (names.length === 0) {
+    indicator.style.display = "none";
+    indicator.innerHTML = "";
+    return;
+  }
+
+  var text = "";
+  if (names.length === 1) {
+    text = names[0] + " is typing";
+  } else if (names.length === 2) {
+    text = names[0] + " and " + names[1] + " are typing";
+  } else {
+    text = names.length + " people are typing";
+  }
+
+  indicator.style.display = "flex";
+  indicator.style.alignItems = "center";
+  indicator.style.gap = "8px";
+  indicator.style.padding = "6px 24px 2px 24px";
+  indicator.style.color = "#94a3b8";
+  indicator.style.fontSize = "13px";
+  indicator.style.fontStyle = "italic";
+  indicator.style.background = "#0f172a";
+  indicator.style.minHeight = "28px";
+  indicator.innerHTML =
+    '<div class="typing-dots"><span></span><span></span><span></span></div>' +
+    '<span>' + text + '</span>';
+}
+
+// ─── Render ───────────────────────────────────────────────
+function render(msg) {
+  var existing = document.getElementById("msg-" + msg._id);
+  if (existing) existing.remove();
+
+  var div = document.createElement("div");
+  div.id = "msg-" + msg._id;
+
+  var senderId = (msg.senderId && msg.senderId._id) ? msg.senderId._id : msg.senderId;
+  var me = (senderId && senderId.toString()) === currentUser;
+
+  div.className = "message " + (me ? "sent" : "received");
+
+  var time = new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  var senderName = (msg.senderId && msg.senderId.name) ? msg.senderId.name : "";
+  var visibility = (msg.visibleTo && msg.visibleTo.length > 0)
+    ? ("🔒 " + msg.visibleTo.length + " only")
+    : "👁 Everyone";
+
+  // Build inner HTML safely using DOM (no template literals with user content)
+  var msgBody = document.createElement("div");
+  msgBody.className = "msg-body";
+
+  if (!me && senderName) {
+    var nameEl = document.createElement("small");
+    nameEl.style.cssText = "opacity:0.6;display:block;margin-bottom:4px;";
+    nameEl.textContent = senderName;
+    msgBody.appendChild(nameEl);
+  }
+  if (!me && senderName) {
+  var nameRow = document.createElement("div");
+  nameRow.style.cssText = "display:flex;align-items:center;gap:5px;margin-bottom:4px;";
+
+  var senderDot = document.createElement("span");
+  senderDot.className = "presence-dot" + (onlineUserIds.has(senderId.toString()) ? " online" : "");
+  senderDot.id = "msgdot-" + senderId;
+
+  var nameEl = document.createElement("small");
+  nameEl.style.cssText = "opacity:0.6;";
+  nameEl.textContent = senderName;
+
+  nameRow.appendChild(senderDot);
+  nameRow.appendChild(nameEl);
+  msgBody.appendChild(nameRow);
+}
+
+  var textEl = document.createElement("span");
+  textEl.textContent = msg.text;
+  msgBody.appendChild(textEl);
+
+  var metaEl = document.createElement("small");
+  metaEl.style.cssText = "opacity:0.65;display:block;margin-top:4px;";
+  metaEl.textContent = time + " · " + visibility;
+  msgBody.appendChild(metaEl);
+
+  // After metaEl is appended, add scheduled badge if applicable
+if (msg.type === "timed") {
+  var badge = document.createElement("span");
+  badge.className = "scheduled-badge";
+  badge.textContent = "⏰ Scheduled";
+  msgBody.appendChild(badge);
+}
+
+  // Emoji picker
+  var picker = document.createElement("div");
+  picker.className = "emoji-picker";
+  picker.id = "picker-" + msg._id;
+  EMOJI_LIST.forEach(function(e) {
+    var btn = document.createElement("span");
+    btn.className = "emoji-btn";
+    btn.textContent = e;
+    btn.onclick = function() { sendReaction(msg._id, e); };
+    picker.appendChild(btn);
+  });
+
+  // Reaction bar
+  var reactionBar = document.createElement("div");
+  reactionBar.className = "reaction-bar";
+  reactionBar.id = "reactions-" + msg._id;
+  reactionBar.innerHTML = buildReactionHTML(msg.reactions || [], msg._id);
+
+  div.appendChild(msgBody);
+  div.appendChild(reactionBar);
+  div.appendChild(picker);
+
+  div.addEventListener("mouseenter", function() {
+    picker.style.opacity = "1";
+    picker.style.pointerEvents = "auto";
+  });
+  div.addEventListener("mouseleave", function() {
+    picker.style.opacity = "0";
+    picker.style.pointerEvents = "none";
+  });
+
+  var messagesDiv = document.getElementById("messages");
+  messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+// ─── Reactions ────────────────────────────────────────────
+function buildReactionHTML(reactions, msgId) {
+  if (!reactions || reactions.length === 0) return "";
+
+  var grouped = {};
+  reactions.forEach(function(r) {
+    if (!grouped[r.emoji]) grouped[r.emoji] = { count: 0, users: [] };
+    grouped[r.emoji].count++;
+    grouped[r.emoji].users.push(r.userId);
+  });
+
+  return Object.keys(grouped).map(function(emoji) {
+    var data  = grouped[emoji];
+    var isMine = data.users.some(function(id) {
+      return id && id.toString() === currentUser;
+    });
+    var label = data.count + " reaction" + (data.count > 1 ? "s" : "");
+    return (
+      '<span class="reaction-chip ' + (isMine ? "mine" : "") + '"' +
+      ' onclick="sendReaction(\'' + msgId + '\', \'' + emoji + '\')"' +
+      ' title="' + label + '">' +
+      emoji + ' ' + data.count +
+      '</span>'
+    );
+  }).join("");
+}
+
+async function sendReaction(messageId, emoji) {
+  if (!token) return;
+  try {
+    await fetch("http://localhost:5000/api/messages/" + messageId + "/react", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ emoji: emoji })
+    });
+  } catch(err) {
+    console.error("Reaction error:", err);
+  }
+}
+</script>
+</body>
+</html>
