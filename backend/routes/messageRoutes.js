@@ -67,14 +67,15 @@ router.post("/", authMiddleware, async (req, res) => {
     const isScheduled = revealAt && new Date(revealAt) > new Date();
 
     const message = await Message.create({
-      groupId,
-      senderId: req.user.id,
-      text,
-      visibleTo,
-      type:        isScheduled ? "timed" : "normal",
-      revealAt:    isScheduled ? new Date(revealAt) : null,
-      isDelivered: !isScheduled   // normal = delivered immediately
-    });
+  groupId,
+  senderId: req.user.id,
+  text,
+  visibleTo,
+  isEncrypted: req.body.isEncrypted || false,  // ✅ ADD THIS
+  type:        isScheduled ? "timed" : "normal",
+  revealAt:    isScheduled ? new Date(revealAt) : null,
+  isDelivered: !isScheduled
+});
 
     if (!isScheduled) {
       // Send right now

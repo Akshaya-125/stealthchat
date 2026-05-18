@@ -42,13 +42,17 @@ const messageSchema = new mongoose.Schema({
     default: null
   },
   isDelivered: {
-  type: Boolean,
-  default: false
-},
-reactions: [{
+    type: Boolean,
+    default: false
+  },
+  reactions: [{
     emoji: { type: String, required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }
-  }]
+  }],
+  isEncrypted: {
+    type: Boolean,
+    default: false
+  }
 }, { timestamps: true });
 
 module.exports = mongoose.model("Message", messageSchema);

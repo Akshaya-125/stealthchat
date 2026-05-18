@@ -178,9 +178,11 @@ input {
   border-color: #3b82f6;
   color: #93c5fd;
 }
+
+/* Typing indicator */
 #typingIndicator {
-  padding: 6px 24px 2px 24px;
-  min-height: 28px;
+  height: 30px;
+  padding: 0 24px;
   background: #0f172a;
   color: #94a3b8;
   font-size: 13px;
@@ -188,14 +190,13 @@ input {
   display: none;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
 }
-
 .typing-dots {
   display: inline-flex;
   gap: 3px;
   align-items: center;
 }
-
 .typing-dots span {
   width: 5px;
   height: 5px;
@@ -204,15 +205,14 @@ input {
   animation: bounce 1.2s infinite;
   display: inline-block;
 }
-
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
 @keyframes bounce {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30%            { transform: translateY(-5px); opacity: 1; }
 }
-/* Online presence dots */
+
+/* Online presence */
 .member-wrapper {
   display: inline-flex;
   align-items: center;
@@ -223,20 +223,21 @@ input {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #475569;   /* offline = gray */
+  background: #475569;
   flex-shrink: 0;
   transition: background 0.3s ease;
 }
 .presence-dot.online {
-  background: #10b981;   /* online = green */
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  background: #10b981;
+  box-shadow: 0 0 6px rgba(16,185,129,0.6);
   animation: pulse 2s infinite;
 }
 @keyframes pulse {
   0%, 100% { box-shadow: 0 0 4px rgba(16,185,129,0.4); }
   50%       { box-shadow: 0 0 10px rgba(16,185,129,0.8); }
 }
-/* Schedule button */
+
+/* Schedule */
 #scheduleBtn {
   background: #7c3aed;
   color: white;
@@ -255,8 +256,6 @@ input {
   padding: 0;
 }
 #scheduleBtn:hover { background: #6d28d9; }
-
-/* Scheduled badge on messages */
 .scheduled-badge {
   display: inline-block;
   background: #7c3aed;
@@ -266,8 +265,6 @@ input {
   border-radius: 10px;
   margin-top: 4px;
 }
-
-/* Scheduled messages panel */
 #scheduledPanel {
   display: none;
   position: fixed;
@@ -283,11 +280,6 @@ input {
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0,0,0,0.5);
 }
-#scheduledPanel h4 {
-  margin: 0 0 12px 0;
-  color: #f1f5f9;
-  font-size: 15px;
-}
 .scheduled-item {
   background: #334155;
   border-radius: 10px;
@@ -295,29 +287,13 @@ input {
   margin: 6px 0;
   font-size: 13px;
 }
-.scheduled-item .sched-text {
-  color: #f1f5f9;
-  margin-bottom: 4px;
-  word-break: break-word;
-}
-.scheduled-item .sched-time {
-  color: #94a3b8;
-  font-size: 12px;
-}
+.scheduled-item .sched-text { color: #f1f5f9; margin-bottom: 4px; word-break: break-word; }
+.scheduled-item .sched-time { color: #94a3b8; font-size: 12px; }
 .scheduled-item .sched-cancel {
-  background: #ef4444;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 3px 10px;
-  font-size: 12px;
-  cursor: pointer;
-  margin-top: 6px;
-  width: auto;
+  background: #ef4444; color: white; border: none;
+  border-radius: 6px; padding: 3px 10px; font-size: 12px;
+  cursor: pointer; margin-top: 6px; width: auto;
 }
-.scheduled-item .sched-cancel:hover { background: #dc2626; }
-
-/* Date/time picker modal */
 #scheduleModal {
   display: none;
   position: fixed;
@@ -331,11 +307,6 @@ input {
   z-index: 1001;
   box-shadow: 0 20px 40px rgba(0,0,0,0.5);
 }
-#scheduleModal h4 {
-  margin: 0 0 12px 0;
-  color: #f1f5f9;
-  font-size: 15px;
-}
 #scheduleDateTime {
   width: 100%;
   padding: 10px;
@@ -347,12 +318,25 @@ input {
   box-sizing: border-box;
   margin-bottom: 12px;
 }
+
+/* Encryption key display box */
+#keyDisplayBox {
+  display: none;
+  margin-top: 10px;
+  padding: 10px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  word-break: break-all;
+  font-size: 11px;
+  color: #10b981;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
-<!-- SPLASH -->
 <div id="splash" style="position:fixed;width:100%;height:100%;background:linear-gradient(135deg,#1e293b,#0f172a);color:#3b82f6;display:flex;justify-content:center;align-items:center;font-size:48px;font-weight:bold;text-shadow:0 0 20px rgba(59,130,246,0.5);z-index:1000;">
   StealthChat
 </div>
@@ -363,7 +347,7 @@ input {
   <input id="password" type="password" placeholder="Password">
   <button onclick="signup()">Signup</button>
   <button onclick="login()">Login</button>
-  
+
   <hr>
 
   <h4>Create Group</h4>
@@ -385,10 +369,34 @@ input {
     <input id="newMember" placeholder="Add Member ID">
     <button onclick="addMemberToGroup()" style="background:#f59e0b;margin-top:8px;">Add to Group</button>
     <button onclick="toggleMemberVisibility()" class="visibility-btn">Toggle Message Privacy</button>
-    <button onclick="toggleScheduledPanel()"
-  style="background:#7c3aed;margin-top:8px;">
-  ⏰ View Scheduled
-</button>
+    <button onclick="toggleScheduledPanel()" style="background:#7c3aed;margin-top:8px;">⏰ View Scheduled</button>
+
+    <!-- Encryption Panel -->
+    <div style="margin-top:12px;padding:12px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <span id="encryptionStatus" style="font-size:18px;">🔓</span>
+        <span id="encryptionLabel" style="font-size:13px;color:#94a3b8;">No encryption</span>
+      </div>
+
+      <button onclick="generateAndSetKey()" style="background:#7c3aed;margin-bottom:6px;">
+        🔑 Generate Group Key
+      </button>
+
+      <!-- Key display box — click to copy -->
+      <div id="keyDisplayBox" onclick="copyKeyFromBox()">
+        <div style="color:#94a3b8;font-size:10px;margin-bottom:4px;">Click to copy key:</div>
+        <div id="keyDisplayText"></div>
+      </div>
+
+      <input id="keyInput" placeholder="Paste key from another member" style="font-size:11px;">
+      <button onclick="importKeyFromInput()" style="background:#0891b2;margin-bottom:6px;">
+        📥 Import Key
+      </button>
+
+      <button onclick="exportCurrentKey()" style="background:#059669;">
+        📤 Export / Copy Key
+      </button>
+    </div>
   </div>
 </div>
 
@@ -396,34 +404,23 @@ input {
   <div id="messages" class="messages"></div>
   <div id="typingIndicator"></div>
 
-  <!-- Scheduled messages panel -->
   <div id="scheduledPanel">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h4 style="margin:0;">⏰ Scheduled Messages</h4>
-      <span onclick="toggleScheduledPanel()"
-            style="cursor:pointer;color:#94a3b8;font-size:18px;line-height:1;">✕</span>
+      <h4 style="margin:0;color:#f1f5f9;">⏰ Scheduled Messages</h4>
+      <span onclick="toggleScheduledPanel()" style="cursor:pointer;color:#94a3b8;font-size:18px;">✕</span>
     </div>
     <div id="scheduledList"></div>
   </div>
 
-  <!-- Schedule time picker -->
   <div id="scheduleModal">
-    <h4>⏰ Schedule Message</h4>
+    <h4 style="color:#f1f5f9;">⏰ Schedule Message</h4>
     <p style="color:#94a3b8;font-size:13px;margin:0 0 10px 0;">
       Message: "<span id="schedulePreview" style="color:#f1f5f9;"></span>"
     </p>
     <input type="datetime-local" id="scheduleDateTime">
     <div style="display:flex;gap:8px;">
-      <button onclick="confirmSchedule()"
-        style="flex:1;background:#7c3aed;color:white;padding:10px;border:none;
-               border-radius:8px;cursor:pointer;font-weight:bold;">
-        Schedule
-      </button>
-      <button onclick="closeScheduleModal()"
-        style="flex:1;background:#475569;color:white;padding:10px;border:none;
-               border-radius:8px;cursor:pointer;">
-        Cancel
-      </button>
+      <button onclick="confirmSchedule()" style="flex:1;background:#7c3aed;color:white;padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:auto;">Schedule</button>
+      <button onclick="closeScheduleModal()" style="flex:1;background:#475569;color:white;padding:10px;border:none;border-radius:8px;cursor:pointer;width:auto;">Cancel</button>
     </div>
   </div>
 
@@ -443,41 +440,538 @@ setTimeout(function() {
   setTimeout(function() { splash.style.display = "none"; }, 500);
 }, 2500);
 
-// ─── State ────────────────────────────────────────────────
-var socket;
-var token = "";
+// ─── E2E Crypto Engine ────────────────────────────────────
+var CryptoEngine = {
+  keys: {},
+
+  generateGroupKey: function() {
+    return crypto.subtle.generateKey(
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  },
+
+  exportKey: function(key) {
+    return crypto.subtle.exportKey("raw", key).then(function(raw) {
+      return btoa(String.fromCharCode.apply(null, new Uint8Array(raw)));
+    });
+  },
+
+  importKey: function(base64) {
+    var raw = Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); });
+    return crypto.subtle.importKey(
+      "raw", raw,
+      { name: "AES-GCM", length: 256 },
+      true,
+      ["encrypt", "decrypt"]
+    );
+  },
+
+  encrypt: function(groupId, plaintext) {
+    var key = CryptoEngine.keys[groupId];
+    if (!key) return Promise.reject(new Error("No key for group"));
+    var iv  = crypto.getRandomValues(new Uint8Array(12));
+    var enc = new TextEncoder();
+    return crypto.subtle.encrypt(
+      { name: "AES-GCM", iv: iv }, key, enc.encode(plaintext)
+    ).then(function(ciphertext) {
+      var combined = new Uint8Array(12 + ciphertext.byteLength);
+      combined.set(iv, 0);
+      combined.set(new Uint8Array(ciphertext), 12);
+      return btoa(String.fromCharCode.apply(null, combined));
+    });
+  },
+
+  decrypt: function(groupId, base64) {
+    var key = CryptoEngine.keys[groupId];
+    if (!key) return Promise.resolve("[encrypted - no key]");
+    try {
+      var combined   = Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); });
+      var iv         = combined.slice(0, 12);
+      var ciphertext = combined.slice(12);
+      return crypto.subtle.decrypt(
+        { name: "AES-GCM", iv: iv }, key, ciphertext
+      ).then(function(dec) {
+        return new TextDecoder().decode(dec);
+      }).catch(function() {
+        return "[could not decrypt]";
+      });
+    } catch(e) {
+      return Promise.resolve("[could not decrypt]");
+    }
+  },
+
+  setKey: function(groupId, base64Key) {
+    return CryptoEngine.importKey(base64Key).then(function(key) {
+      CryptoEngine.keys[groupId] = key;
+    });
+  },
+
+  hasKey: function(groupId) {
+    return !!CryptoEngine.keys[groupId];
+  }
+};
+
+// ─── Global State ─────────────────────────────────────────
+var socket          = null;
+var token           = "";
+var currentUser     = "";
 var currentUserName = "";
-var currentUser = "";
-var currentGroup = "";
+var currentGroup    = "";
 var privacySelections = {};
-var typingUsers = {};      // { userId: { name, timer } }
-var typingTimeout = null;  // debounce timer for outgoing typing events
-var isTyping = false;      // tracks if WE are currently flagged as typing
-var EMOJI_LIST = ["👍","❤️","😂","😮","😢","🔥","👀","🤝"];
-var onlineUserIds = new Set(); // tracks who is currently online
-// ─── Scheduled Messages ───────────────────────────────────
+var typingUsers     = {};
+var typingTimeout   = null;
+var isTyping        = false;
+var onlineUserIds   = new Set();
 var pendingScheduleText = "";
+var EMOJI_LIST      = ["👍","❤️","😂","😮","😢","🔥","👀","🤝"];
 
-function openScheduleModal() {
-  var msgInput = document.getElementById("msg");
-  var text = msgInput.value.trim();
+// ─── Encryption UI ────────────────────────────────────────
+function generateAndSetKey() {
   if (!currentGroup) return alert("Select a group first");
-  if (!text) return alert("Type a message first, then click the clock to schedule it");
 
+  CryptoEngine.generateGroupKey().then(function(key) {
+    return CryptoEngine.exportKey(key).then(function(base64) {
+      CryptoEngine.keys[currentGroup] = key;
+      updateEncryptionStatus(true);
+
+      // Show key in display box (fallback for clipboard issues)
+      var box = document.getElementById("keyDisplayBox");
+      document.getElementById("keyDisplayText").textContent = base64;
+      box.style.display = "block";
+
+      // Try clipboard
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(base64).then(function() {
+          alert("Key generated and copied to clipboard!\n\nAlso shown below — click it to copy again.\n\nShare with group members via WhatsApp/Signal.");
+        }).catch(function() {
+          alert("Key generated!\n\nClipboard blocked — click the green box below to copy the key.");
+        });
+      } else {
+        alert("Key generated!\n\nClick the green box below to copy the key, then share with members.");
+      }
+    });
+  }).catch(function(err) {
+    alert("Error generating key: " + err.message);
+    console.error(err);
+  });
+}
+
+function copyKeyFromBox() {
+  var text = document.getElementById("keyDisplayText").textContent;
+  if (!text) return;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert("Key copied to clipboard!");
+    }).catch(function() {
+      // Manual fallback
+      var ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      alert("Key copied!");
+    });
+  } else {
+    var ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+    alert("Key copied!");
+  }
+}
+
+function importKeyFromInput() {
+  var keyVal = document.getElementById("keyInput").value.trim();
+  if (!keyVal) return alert("Paste a key first");
+  if (!currentGroup) return alert("Select a group first");
+
+  CryptoEngine.setKey(currentGroup, keyVal).then(function() {
+    document.getElementById("keyInput").value = "";
+    updateEncryptionStatus(true);
+    alert("Key imported! Messages will now be decrypted.");
+    loadMessages();
+  }).catch(function() {
+    alert("Invalid key — make sure you pasted it correctly");
+  });
+}
+
+function exportCurrentKey() {
+  if (!currentGroup) return alert("Select a group first");
+  if (!CryptoEngine.hasKey(currentGroup)) return alert("No key — generate one first");
+
+  CryptoEngine.exportKey(CryptoEngine.keys[currentGroup]).then(function(base64) {
+    // Show in box
+    var box = document.getElementById("keyDisplayBox");
+    document.getElementById("keyDisplayText").textContent = base64;
+    box.style.display = "block";
+    copyKeyFromBox();
+  });
+}
+
+function updateEncryptionStatus(isEncrypted) {
+  var status = document.getElementById("encryptionStatus");
+  var label  = document.getElementById("encryptionLabel");
+  if (!status || !label) return;
+  if (isEncrypted) {
+    status.textContent = "🔐";
+    label.textContent  = "E2E Encrypted";
+    label.style.color  = "#10b981";
+  } else {
+    status.textContent = "🔓";
+    label.textContent  = "No encryption";
+    label.style.color  = "#94a3b8";
+    document.getElementById("keyDisplayBox").style.display = "none";
+  }
+}
+
+// ─── Auth ─────────────────────────────────────────────────
+function signup() {
+  var emailVal = document.getElementById("email").value;
+  var passVal  = document.getElementById("password").value;
+  if (!emailVal || !passVal) return alert("Enter email and password");
+
+  fetch("http://localhost:5000/api/auth/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: emailVal.split("@")[0], email: emailVal, password: passVal })
+  })
+  .then(function(res) { return res.json().then(function(d) { return { s: res.status, d: d }; }); })
+  .then(function(r) {
+    if (r.s !== 201) return alert(r.d.message || "Signup failed");
+    alert("Signup success");
+  })
+  .catch(function(err) { alert("Signup error: " + err.message); });
+}
+
+function login() {
+  var emailVal = document.getElementById("email").value;
+  var passVal  = document.getElementById("password").value;
+
+  fetch("http://localhost:5000/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email: emailVal, password: passVal })
+  })
+  .then(function(res) { return res.json().then(function(d) { return { s: res.status, d: d }; }); })
+  .then(function(r) {
+    if (r.s !== 200) return alert(r.d.message || "Login failed");
+    token           = r.d.token;
+    currentUser     = r.d.user._id;
+    currentUserName = r.d.user.name || r.d.user.email || "Someone";
+    alert("Login success");
+    loadGroups();
+  })
+  .catch(function(err) { alert("Login error: " + err.message); });
+}
+
+// ─── Groups ───────────────────────────────────────────────
+function loadGroups() {
+  if (!token) return;
+  fetch("http://localhost:5000/api/groups/my", {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(groups) {
+    var groupList = document.getElementById("groupList");
+    groupList.innerHTML = "";
+    groups.forEach(function(g) {
+      var div = document.createElement("div");
+      div.textContent = g.name + " (" + g.members.length + " members)";
+      div.style.cssText = "cursor:pointer;padding:12px;margin:4px 0;border-radius:12px;" +
+        "transition:all 0.2s;background:" + (currentGroup === g._id ? "#3b82f6" : "#334155") + ";";
+      div.onmouseover = function() { if (currentGroup !== g._id) div.style.background = "#475569"; };
+      div.onmouseout  = function() { if (currentGroup !== g._id) div.style.background = "#334155"; };
+      div.onclick = function() { connectGroup(g._id); };
+      groupList.appendChild(div);
+    });
+  })
+  .catch(function(err) { console.error("Load groups error:", err); });
+}
+
+function createGroup() {
+  var nameVal = document.getElementById("groupName").value.trim();
+  if (!token || !nameVal) return alert("Login and enter a group name");
+  fetch("http://localhost:5000/api/groups", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ name: nameVal })
+  })
+  .then(function(res) {
+    if (res.ok) {
+      alert("Group created");
+      document.getElementById("groupName").value = "";
+      loadGroups();
+    }
+  })
+  .catch(function(err) { alert("Create error: " + err.message); });
+}
+
+// ─── Connect Group ────────────────────────────────────────
+function connectGroup(groupId) {
+  typingUsers = {};
+  isTyping = false;
+  clearTimeout(typingTimeout);
+  hideTypingIndicator();
+  updateEncryptionStatus(CryptoEngine.hasKey(groupId));
+
+  currentGroup = groupId;
+  loadGroups();
+  document.getElementById("groupInfo").style.display = "block";
+  loadMessages();
+  loadGroupMembers();
+
+  if (socket) { socket.off(); socket.disconnect(); socket = null; }
+
+  socket = io("http://localhost:5000", { transports: ["websocket"] });
+
+  socket.on("connect", function() {
+    socket.emit("joinUser", currentUser);
+    socket.emit("joinGroup", currentGroup);
+    socket.emit("getOnlineUsers");
+  });
+
+  socket.on("onlineUsersList", function(data) {
+    onlineUserIds = new Set(data.userIds);
+    loadGroupMembers();
+  });
+  socket.on("userOnline", function(data) {
+    onlineUserIds.add(data.userId);
+    updatePresenceDot(data.userId, true);
+  });
+  socket.on("userOffline", function(data) {
+    onlineUserIds.delete(data.userId);
+    updatePresenceDot(data.userId, false);
+  });
+
+  socket.on("newMessage", function(msg) {
+    if (shouldSeeMessage(msg)) render(msg);
+  });
+
+  socket.on("userTyping", function(data) {
+    if (typingUsers[data.userId]) clearTimeout(typingUsers[data.userId].timer);
+    typingUsers[data.userId] = {
+      name: data.name || "Someone",
+      timer: setTimeout(function() {
+        delete typingUsers[data.userId];
+        renderTypingIndicator();
+      }, 3000)
+    };
+    renderTypingIndicator();
+  });
+
+  socket.on("userStopTyping", function(data) {
+    if (typingUsers[data.userId]) {
+      clearTimeout(typingUsers[data.userId].timer);
+      delete typingUsers[data.userId];
+    }
+    renderTypingIndicator();
+  });
+
+  socket.on("reactionUpdate", function(data) {
+    var bar = document.getElementById("reactions-" + data.messageId);
+    if (bar) bar.innerHTML = buildReactionHTML(data.reactions, data.messageId);
+  });
+}
+
+// ─── Typing ───────────────────────────────────────────────
+function hideTypingIndicator() {
+  var el = document.getElementById("typingIndicator");
+  el.style.display = "none";
+  el.innerHTML = "";
+}
+
+function renderTypingIndicator() {
+  var el    = document.getElementById("typingIndicator");
+  var names = Object.keys(typingUsers).map(function(k) { return typingUsers[k].name; });
+  if (names.length === 0) { hideTypingIndicator(); return; }
+  var text = names.length === 1
+    ? names[0] + " is typing..."
+    : names.length === 2
+      ? names[0] + " and " + names[1] + " are typing..."
+      : names.length + " people are typing...";
+  el.style.display    = "flex";
+  el.style.alignItems = "center";
+  el.style.gap        = "8px";
+  el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div><span>' + text + '</span>';
+}
+
+function handleTyping() {
+  if (!socket || !socket.connected || !currentGroup || !currentUser) return;
+  if (!isTyping) {
+    isTyping = true;
+    socket.emit("typing", { groupId: currentGroup, userId: currentUser, name: currentUserName });
+  }
+  clearTimeout(typingTimeout);
+  typingTimeout = setTimeout(function() {
+    isTyping = false;
+    socket.emit("stopTyping", { groupId: currentGroup, userId: currentUser });
+  }, 1500);
+}
+
+document.getElementById("msg").addEventListener("keydown", function(e) {
+  if (e.key === "Enter") { sendMessage(); } else { handleTyping(); }
+});
+
+// ─── Presence ─────────────────────────────────────────────
+function updatePresenceDot(userId, isOnline) {
+  var dot = document.getElementById("dot-" + userId);
+  if (dot) {
+    if (isOnline) { dot.classList.add("online"); dot.title = "Online"; }
+    else          { dot.classList.remove("online"); dot.title = "Offline"; }
+  }
+  var msgDot = document.getElementById("msgdot-" + userId);
+  if (msgDot) {
+    if (isOnline) msgDot.classList.add("online");
+    else          msgDot.classList.remove("online");
+  }
+}
+
+// ─── Members ──────────────────────────────────────────────
+function loadGroupMembers() {
+  if (!currentGroup || !token) return;
+  fetch("http://localhost:5000/api/groups/" + currentGroup, {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(group) {
+    var membersDiv = document.getElementById("groupMembers");
+    membersDiv.innerHTML = "";
+    (group.members || []).forEach(function(member) {
+      var id      = (member._id || member).toString();
+      var name    = member.name || ("..." + id.slice(-8));
+      var isOnline = onlineUserIds.has(id);
+      var isMe    = (id === currentUser);
+      var wrapper = document.createElement("div");
+      wrapper.className = "member-wrapper";
+      var dot = document.createElement("span");
+      dot.className = "presence-dot" + (isOnline ? " online" : "");
+      dot.id = "dot-" + id;
+      dot.title = isOnline ? "Online" : "Offline";
+      var tag = document.createElement("span");
+      tag.className = "member-tag group-tag";
+      tag.textContent = name + (isMe ? " (you)" : "");
+      wrapper.appendChild(dot);
+      wrapper.appendChild(tag);
+      membersDiv.appendChild(wrapper);
+    });
+
+    var visibleDiv = document.getElementById("visibleMembers");
+    if (group.visibleMembers && group.visibleMembers.length > 0) {
+      var tags = group.visibleMembers.map(function(member) {
+        var id   = (member._id || member).toString();
+        var name = member.name || ("..." + id.slice(-8));
+        return '<span class="member-tag visible-tag">' + name + '</span>';
+      }).join("");
+      visibleDiv.innerHTML = '<div style="color:#3b82f6;font-weight:bold;margin-bottom:6px;">PRIVATE: ' +
+        group.visibleMembers.length + ' members only</div>' + tags;
+    } else {
+      visibleDiv.innerHTML = '<span style="color:#10b981;">PUBLIC: Everyone in group</span>';
+    }
+  })
+  .catch(function(err) { console.error("Load members error:", err); });
+}
+
+function addMemberToGroup() {
+  var val = document.getElementById("newMember").value.trim();
+  if (!currentGroup || !val) return alert("Select group and enter member ID");
+  fetch("http://localhost:5000/api/groups/add-member", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ groupId: currentGroup, userId: val })
+  })
+  .then(function() {
+    alert("Member added");
+    document.getElementById("newMember").value = "";
+    loadGroupMembers();
+  })
+  .catch(function(err) { alert("Error: " + err.message); });
+}
+
+// ─── Privacy Modal ────────────────────────────────────────
+function toggleMemberVisibility() {
+  if (!currentGroup) return alert("Select a group first");
+  closePrivacyModal();
+  fetch("http://localhost:5000/api/groups/" + currentGroup, {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(group) {
+    privacySelections = {};
+    (group.visibleMembers || []).forEach(function(m) {
+      privacySelections[(m._id || m).toString()] = true;
+    });
+    var overlay = document.createElement("div");
+    overlay.id = "privacyModal";
+    overlay.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;" +
+      "background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;";
+    var box = document.createElement("div");
+    box.style.cssText = "background:#1e293b;border-radius:16px;padding:28px;width:340px;max-height:80vh;overflow-y:auto;color:#f1f5f9;";
+    var html = (group.members || []).map(function(member) {
+      var id      = (member._id || member).toString();
+      var name    = member.name || ("..." + id.slice(-8));
+      var isMe    = (id === currentUser);
+      var checked = privacySelections[id] ? "checked" : "";
+      return '<label style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:#334155;border-radius:8px;margin:6px 0;cursor:pointer;">' +
+        '<input type="checkbox" value="' + id + '" ' + checked +
+        ' onchange="togglePrivacySelection(this.value,this.checked)"' +
+        ' style="width:18px;height:18px;cursor:pointer;accent-color:#10b981;">' +
+        '<span style="font-size:14px;">' + name + (isMe ? ' <span style="color:#10b981;font-size:12px;">(you)</span>' : '') + '</span></label>';
+    }).join("");
+    box.innerHTML = '<h3 style="margin:0 0 8px 0;font-size:18px;">Message Privacy</h3>' +
+      '<p style="color:#94a3b8;font-size:13px;margin:0 0 16px 0;">Check who sees messages. Leave all unchecked = everyone sees.</p>' +
+      '<div>' + html + '</div>' +
+      '<div style="display:flex;gap:10px;margin-top:20px;">' +
+      '<button onclick="savePrivacySelection()" style="flex:1;background:#10b981;color:white;padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">Save</button>' +
+      '<button onclick="closePrivacyModal()" style="flex:1;background:#ef4444;color:white;padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">Cancel</button></div>';
+    overlay.addEventListener("click", function(e) { if (e.target === overlay) closePrivacyModal(); });
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  });
+}
+
+function closePrivacyModal() {
+  var m = document.getElementById("privacyModal");
+  if (m) m.remove();
+}
+
+function togglePrivacySelection(id, checked) {
+  if (checked) privacySelections[id] = true;
+  else delete privacySelections[id];
+}
+
+function savePrivacySelection() {
+  var ids = Object.keys(privacySelections);
+  fetch("http://localhost:5000/api/groups/" + currentGroup + "/visibility", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ visibleMembers: ids })
+  })
+  .then(function(res) {
+    if (!res.ok) return alert("Failed to save");
+    alert(ids.length === 0 ? "Public - everyone sees messages" : "Private - only " + ids.length + " member(s) see messages");
+    closePrivacyModal();
+    loadGroupMembers();
+  })
+  .catch(function(err) { alert("Error: " + err.message); });
+}
+
+// ─── Scheduled Messages ───────────────────────────────────
+function openScheduleModal() {
+  var text = document.getElementById("msg").value.trim();
+  if (!currentGroup) return alert("Select a group first");
+  if (!text) return alert("Type a message first");
   pendingScheduleText = text;
-
-  // Show preview (truncated)
   var preview = text.length > 40 ? text.slice(0, 40) + "..." : text;
   document.getElementById("schedulePreview").textContent = preview;
-
-  // Default to 1 hour from now
-  var defaultTime = new Date(Date.now() + 60 * 60 * 1000);
-  var localISO = new Date(defaultTime.getTime() - defaultTime.getTimezoneOffset() * 60000)
-    .toISOString().slice(0, 16);
-  document.getElementById("scheduleDateTime").value = localISO;
-  document.getElementById("scheduleDateTime").min = new Date(Date.now() + 60000 - 
-    new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-
+  var def = new Date(Date.now() + 3600000);
+  var iso = new Date(def.getTime() - def.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  document.getElementById("scheduleDateTime").value = iso;
   document.getElementById("scheduleModal").style.display = "block";
 }
 
@@ -489,50 +983,28 @@ function closeScheduleModal() {
 function confirmSchedule() {
   var dateVal = document.getElementById("scheduleDateTime").value;
   if (!dateVal) return alert("Pick a date and time");
-
   var revealAt = new Date(dateVal);
-  if (revealAt <= new Date()) return alert("Pick a time in the future");
-
-  // Send to server as scheduled
+  if (revealAt <= new Date()) return alert("Pick a future time");
   fetch("http://localhost:5000/api/messages", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + token
-    },
-    body: JSON.stringify({
-      groupId:  currentGroup,
-      text:     pendingScheduleText,
-      revealAt: revealAt.toISOString()
-    })
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ groupId: currentGroup, text: pendingScheduleText, revealAt: revealAt.toISOString() })
   })
   .then(function(res) { return res.json(); })
   .then(function(data) {
     if (data.scheduled) {
-      var timeStr = revealAt.toLocaleString([], {
-        month:  "short", day: "numeric",
-        hour:   "2-digit", minute: "2-digit"
-      });
-      alert("Scheduled for " + timeStr);
+      alert("Scheduled for " + revealAt.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }));
       document.getElementById("msg").value = "";
       closeScheduleModal();
-      // Refresh scheduled panel if open
-      if (document.getElementById("scheduledPanel").style.display === "block") {
-        loadScheduledMessages();
-      }
     }
   })
   .catch(function(err) { alert("Schedule error: " + err.message); });
 }
 
 function toggleScheduledPanel() {
-  var panel = document.getElementById("scheduledPanel");
-  if (panel.style.display === "block") {
-    panel.style.display = "none";
-  } else {
-    panel.style.display = "block";
-    loadScheduledMessages();
-  }
+  var p = document.getElementById("scheduledPanel");
+  if (p.style.display === "block") { p.style.display = "none"; }
+  else { p.style.display = "block"; loadScheduledMessages(); }
 }
 
 function loadScheduledMessages() {
@@ -541,530 +1013,83 @@ function loadScheduledMessages() {
     headers: { "Authorization": "Bearer " + token }
   })
   .then(function(res) { return res.json(); })
-  .then(function(messages) {
+  .then(function(msgs) {
     var list = document.getElementById("scheduledList");
-    if (!messages.length) {
+    if (!msgs.length) {
       list.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;">No scheduled messages</p>';
       return;
     }
     list.innerHTML = "";
-    messages.forEach(function(msg) {
-      var revealDate = new Date(msg.revealAt).toLocaleString([], {
-        month: "short", day: "numeric",
-        hour: "2-digit", minute: "2-digit"
-      });
+    msgs.forEach(function(msg) {
+      var t = new Date(msg.revealAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
       var item = document.createElement("div");
       item.className = "scheduled-item";
-      item.innerHTML =
-        '<div class="sched-text">' + msg.text + '</div>' +
-        '<div class="sched-time">Sends at: ' + revealDate + '</div>' +
+      item.innerHTML = '<div class="sched-text">' + msg.text + '</div>' +
+        '<div class="sched-time">Sends at: ' + t + '</div>' +
         '<button class="sched-cancel" onclick="cancelScheduled(\'' + msg._id + '\')">Cancel</button>';
       list.appendChild(item);
     });
   })
-  .catch(function(err) { console.error("Load scheduled error:", err); });
+  .catch(function(err) { console.error("Scheduled error:", err); });
 }
 
-function cancelScheduled(messageId) {
+function cancelScheduled(id) {
   if (!confirm("Cancel this scheduled message?")) return;
-  fetch("http://localhost:5000/api/messages/scheduled/" + messageId, {
-    method: "DELETE",
-    headers: { "Authorization": "Bearer " + token }
+  fetch("http://localhost:5000/api/messages/scheduled/" + id, {
+    method: "DELETE", headers: { "Authorization": "Bearer " + token }
   })
-  .then(function(res) {
-    if (res.ok) {
-      alert("Scheduled message cancelled");
-      loadScheduledMessages();
-    }
-  })
+  .then(function(res) { if (res.ok) { alert("Cancelled"); loadScheduledMessages(); } })
   .catch(function(err) { alert("Error: " + err.message); });
-}
-
-// ─── Auth ─────────────────────────────────────────────────
-async function signup() {
-  var emailVal = document.getElementById("email").value;
-  var passVal  = document.getElementById("password").value;
-  if (!emailVal || !passVal) return alert("Enter email and password");
-
-  try {
-    var res = await fetch("http://localhost:5000/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: emailVal.split("@")[0],
-        email: emailVal,
-        password: passVal
-      })
-    });
-    var data = await res.json();
-    if (res.status !== 201) return alert(data.message || "Signup failed");
-    alert("Signup success");
-  } catch(err) {
-    alert("Signup error: " + err.message);
-  }
-}
-
-async function login() {
-  var emailVal = document.getElementById("email").value;
-  var passVal  = document.getElementById("password").value;
-
-  try {
-    var res = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: emailVal, password: passVal })
-    });
-    var data = await res.json();
-    if (res.status !== 200) return alert(data.message || "Login failed");
-    
-    token = data.token;
-    currentUser = data.user._id;
-    currentUserName = data.user.name || data.user.email || "Someone";  
-    alert("Login success");
-    loadGroups();
-  } catch(err) {
-    alert("Login error: " + err.message);
-  }
-}
-
-// ─── Groups ───────────────────────────────────────────────
-async function loadGroups() {
-  if (!token) return;
-  try {
-    var res = await fetch("http://localhost:5000/api/groups/my", {
-      headers: { "Authorization": "Bearer " + token }
-    });
-    var groups = await res.json();
-    if (res.status !== 200) return console.error("Groups error:", groups);
-
-    var groupList = document.getElementById("groupList");
-    groupList.innerHTML = "";
-
-    groups.forEach(function(g) {
-      var div = document.createElement("div");
-      div.textContent = g.name + " (" + g.members.length + " members)";
-      div.style.cssText = "cursor:pointer;padding:12px;background:" +
-        (currentGroup === g._id ? "#3b82f6" : "#334155") +
-        ";margin:4px 0;border-radius:12px;transition:all 0.2s;";
-      div.onmouseover = function() {
-        if (currentGroup !== g._id) div.style.background = "#475569";
-      };
-      div.onmouseout = function() {
-        if (currentGroup !== g._id) div.style.background = "#334155";
-      };
-      div.onclick = function() { connectGroup(g._id); };
-      groupList.appendChild(div);
-    });
-  } catch(err) {
-    console.error("Load groups error:", err);
-  }
-}
-
-async function createGroup() {
-  var nameVal = document.getElementById("groupName").value.trim();
-  if (!token || !nameVal) return alert("Login and enter a group name");
-  try {
-    var res = await fetch("http://localhost:5000/api/groups", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ name: nameVal })
-    });
-    if (res.ok) {
-      alert("Group created");
-      document.getElementById("groupName").value = "";
-      loadGroups();
-    }
-  } catch(err) {
-    alert("Create error: " + err.message);
-  }
-}
-
-async function connectGroup(groupId) {
-  typingUsers = {};
-  isTyping = false;
-  clearTimeout(typingTimeout);
-  updateTypingIndicator();
-  currentGroup = groupId;
-  loadGroups();
-  document.getElementById("groupInfo").style.display = "block";
-  await loadMessages();
-  await loadGroupMembers();
-
-  if (socket) socket.disconnect();
-  socket = io("http://localhost:5000");
-  socket.emit("joinUser", currentUser);
-  socket.emit("joinGroup", currentGroup);
-  // Request current online users when joining
-socket.emit("getOnlineUsers");
-
-socket.on("onlineUsersList", function(data) {
-  onlineUserIds = new Set(data.userIds);
-  console.log("Online users:", data.userIds.length);
-  updateAllPresenceDots();
-});
-
-socket.on("userOnline", function(data) {
-  onlineUserIds.add(data.userId);
-  updatePresenceDot(data.userId, true);
-});
-
-socket.on("userOffline", function(data) {
-  onlineUserIds.delete(data.userId);
-  updatePresenceDot(data.userId, false);
-});
-  socket.on("newMessage", function(msg) {
-    if (shouldSeeMessage(msg)) render(msg);
-  });
-  socket.on("userTyping", function(data) {
-  // Start a self-clearing timer per user
-  if (typingUsers[data.userId]) {
-    clearTimeout(typingUsers[data.userId].timer);
-  }
-
-  typingUsers[data.userId] = {
-    name: data.name || "Someone",
-    // Auto-clear if stopTyping never arrives (safety net)
-    timer: setTimeout(function() {
-      delete typingUsers[data.userId];
-      updateTypingIndicator();
-    }, 3000)
-  };
-
-  updateTypingIndicator();
-});
-
-socket.on("userStopTyping", function(data) {
-  if (typingUsers[data.userId]) {
-    clearTimeout(typingUsers[data.userId].timer);
-    delete typingUsers[data.userId];
-  }
-  updateTypingIndicator();
-});
-  socket.on("reactionUpdate", function(data) {
-    var bar = document.getElementById("reactions-" + data.messageId);
-    if (bar) bar.innerHTML = buildReactionHTML(data.reactions, data.messageId);
-  });
-}
-function updatePresenceDot(userId, isOnline) {
-  // Update dot in group members panel
-  var dot = document.getElementById("dot-" + userId);
-  if (dot) {
-    if (isOnline) {
-      dot.classList.add("online");
-      dot.title = "Online";
-    } else {
-      dot.classList.remove("online");
-      dot.title = "Offline";
-    }
-  }
-
-  // Update dot in message sender names
-  var msgDot = document.getElementById("msgdot-" + userId);
-  if (msgDot) {
-    if (isOnline) {
-      msgDot.classList.add("online");
-    } else {
-      msgDot.classList.remove("online");
-    }
-  }
-}
-
-function updateAllPresenceDots() {
-  // Re-render the members panel with fresh online status
-  loadGroupMembers();
-}
-// ─── Members ──────────────────────────────────────────────
-async function loadGroupMembers() {
-  if (!currentGroup || !token) return;
-  fetch("http://localhost:5000/api/groups/" + currentGroup, {
-    headers: { "Authorization": "Bearer " + token }
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(group) {
-    var membersDiv = document.getElementById("groupMembers");
-    membersDiv.innerHTML = "";
-
-    (group.members || []).forEach(function(member) {
-      var id      = (member._id || member).toString();
-      var name    = member.name || ("..." + id.slice(-8));
-      var isOnline = onlineUserIds.has(id);
-      var isMe    = (id === currentUser);
-
-      // Wrapper with dot + name tag
-      var wrapper = document.createElement("div");
-      wrapper.className = "member-wrapper";
-
-      var dot = document.createElement("span");
-      dot.className = "presence-dot" + (isOnline ? " online" : "");
-      dot.id = "dot-" + id;
-      dot.title = isOnline ? "Online" : "Offline";
-
-      var tag = document.createElement("span");
-      tag.className = "member-tag group-tag";
-      tag.textContent = name + (isMe ? " (you)" : "");
-
-      wrapper.appendChild(dot);
-      wrapper.appendChild(tag);
-      membersDiv.appendChild(wrapper);
-    });
-
-    // Visible members section (unchanged)
-    var visibleDiv = document.getElementById("visibleMembers");
-    if (group.visibleMembers && group.visibleMembers.length > 0) {
-      var tags = group.visibleMembers.map(function(member) {
-        var id   = (member._id || member).toString();
-        var name = member.name || ("..." + id.slice(-8));
-        return '<span class="member-tag visible-tag">' + name + '</span>';
-      }).join("");
-      visibleDiv.innerHTML =
-        '<div style="color:#3b82f6;font-weight:bold;margin-bottom:6px;">PRIVATE: ' +
-        group.visibleMembers.length + ' members only</div>' + tags;
-    } else {
-      visibleDiv.innerHTML = '<span style="color:#10b981;">PUBLIC: Everyone in group</span>';
-    }
-  })
-  .catch(function(err) { console.error("Load members error:", err); });
-}
-async function addMemberToGroup() {
-  var newMemberVal = document.getElementById("newMember").value.trim();
-  if (!currentGroup || !newMemberVal) return alert("Select group and enter member ID");
-  try {
-    await fetch("http://localhost:5000/api/groups/add-member", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ groupId: currentGroup, userId: newMemberVal })
-    });
-    alert("Member added");
-    document.getElementById("newMember").value = "";
-    loadGroupMembers();
-  } catch(err) {
-    alert("Error: " + err.message);
-  }
-}
-
-// ─── Privacy Modal ────────────────────────────────────────
-async function toggleMemberVisibility() {
-  if (!currentGroup) return alert("Select a group first");
-  closePrivacyModal();
-
-  var res = await fetch("http://localhost:5000/api/groups/" + currentGroup, {
-    headers: { "Authorization": "Bearer " + token }
-  });
-  var group = await res.json();
-
-  privacySelections = {};
-  (group.visibleMembers || []).forEach(function(m) {
-    var id = (m._id || m).toString();
-    privacySelections[id] = true;
-  });
-
-  var overlay = document.createElement("div");
-  overlay.id = "privacyModal";
-  overlay.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;" +
-    "background:rgba(0,0,0,0.85);display:flex;align-items:center;" +
-    "justify-content:center;z-index:99999;";
-
-  var box = document.createElement("div");
-  box.style.cssText = "background:#1e293b;border-radius:16px;padding:28px;" +
-    "width:340px;max-height:80vh;overflow-y:auto;color:#f1f5f9;";
-
-  var membersHtml = (group.members || []).map(function(member) {
-    var id        = (member._id || member).toString();
-    var shortId   = id.slice(-8);
-    var isMe      = (id === currentUser);
-    var name      = member.name || ("..." + shortId);
-    var isChecked = privacySelections[id] ? "checked" : "";
-    return (
-      '<label style="display:flex;align-items:center;gap:12px;padding:10px 12px;' +
-      'background:#334155;border-radius:8px;margin:6px 0;cursor:pointer;">' +
-      '<input type="checkbox" value="' + id + '" ' + isChecked +
-      ' onchange="togglePrivacySelection(this.value, this.checked)"' +
-      ' style="width:18px;height:18px;cursor:pointer;accent-color:#10b981;">' +
-      '<span style="font-size:14px;">' + name +
-      (isMe ? ' <span style="color:#10b981;font-size:12px;">(you)</span>' : '') +
-      '</span></label>'
-    );
-  }).join("");
-
-  box.innerHTML =
-    '<h3 style="margin:0 0 8px 0;font-size:18px;">Message Privacy</h3>' +
-    '<p style="color:#94a3b8;font-size:13px;margin:0 0 16px 0;">' +
-    'Check who can see messages. Leave all unchecked = everyone sees.</p>' +
-    '<div id="memberCheckboxes">' + membersHtml + '</div>' +
-    '<div style="display:flex;gap:10px;margin-top:20px;">' +
-    '<button onclick="savePrivacySelection()" style="flex:1;background:#10b981;color:white;' +
-    'padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">' +
-    'Save</button>' +
-    '<button onclick="closePrivacyModal()" style="flex:1;background:#ef4444;color:white;' +
-    'padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">' +
-    'Cancel</button></div>';
-
-  overlay.addEventListener("click", function(e) {
-    if (e.target === overlay) closePrivacyModal();
-  });
-
-  overlay.appendChild(box);
-  document.body.appendChild(overlay);
-}
-
-function closePrivacyModal() {
-  var modal = document.getElementById("privacyModal");
-  if (modal) modal.remove();
-}
-
-function togglePrivacySelection(memberId, checked) {
-  if (checked) {
-    privacySelections[memberId] = true;
-  } else {
-    delete privacySelections[memberId];
-  }
-}
-
-async function savePrivacySelection() {
-  var selectedIds = Object.keys(privacySelections);
-  try {
-    var res = await fetch("http://localhost:5000/api/groups/" + currentGroup + "/visibility", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ visibleMembers: selectedIds })
-    });
-    if (!res.ok) return alert("Failed to save");
-
-    if (selectedIds.length === 0) {
-      alert("Public - everyone sees messages");
-    } else {
-      alert("Private - only " + selectedIds.length + " member(s) see new messages");
-    }
-    closePrivacyModal();
-    loadGroupMembers();
-  } catch(err) {
-    alert("Error: " + err.message);
-  }
 }
 
 // ─── Messages ─────────────────────────────────────────────
 function shouldSeeMessage(msg) {
   if (!msg.visibleTo || msg.visibleTo.length === 0) return true;
-  return msg.visibleTo.some(function(id) {
-    return (id && id.toString()) === currentUser;
-  });
+  return msg.visibleTo.some(function(id) { return (id && id.toString()) === currentUser; });
 }
 
-async function loadMessages() {
+function loadMessages() {
   if (!currentGroup || !token) return;
-  try {
-    var res = await fetch("http://localhost:5000/api/messages/" + currentGroup, {
-      headers: { "Authorization": "Bearer " + token }
-    });
-    var data = await res.json();
-    var messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = "";
-    if (Array.isArray(data)) {
-      data.filter(shouldSeeMessage).forEach(function(msg) { render(msg); });
-    }
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  } catch(err) {
-    console.error("Load messages error:", err);
-  }
+  fetch("http://localhost:5000/api/messages/" + currentGroup, {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var div = document.getElementById("messages");
+    div.innerHTML = "";
+    if (Array.isArray(data)) data.filter(shouldSeeMessage).forEach(function(msg) { render(msg); });
+    div.scrollTop = div.scrollHeight;
+  })
+  .catch(function(err) { console.error("Load messages error:", err); });
 }
 
-async function sendMessage() {
+function sendMessage() {
   var msgInput = document.getElementById("msg");
   if (!currentGroup || !msgInput.value.trim()) return;
-   // ✅ ADD — stop typing indicator when message is sent
   isTyping = false;
   clearTimeout(typingTimeout);
-  if (socket) socket.emit("stopTyping", { groupId: currentGroup, userId: currentUser });
+  if (socket && socket.connected) socket.emit("stopTyping", { groupId: currentGroup, userId: currentUser });
 
-  try {
-    var res = await fetch("http://localhost:5000/api/messages", {
+  var plaintext = msgInput.value;
+  msgInput.value = "";
+
+  var sendIt = function(text, isEncrypted) {
+    fetch("http://localhost:5000/api/messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ groupId: currentGroup, text: msgInput.value })
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+      body: JSON.stringify({ groupId: currentGroup, text: text, isEncrypted: isEncrypted })
+    }).catch(function(err) { console.error("Send error:", err); });
+  };
+
+  if (CryptoEngine.hasKey(currentGroup)) {
+    CryptoEngine.encrypt(currentGroup, plaintext).then(function(encrypted) {
+      sendIt(encrypted, true);
+    }).catch(function() {
+      sendIt(plaintext, false);
     });
-    if (res.ok) msgInput.value = "";
-  } catch(err) {
-    console.error("Send error:", err);
-  }
-}
-
-// Enter key to send
-document.getElementById("msg").addEventListener("keypress", function(e) {
-  if (e.key === "Enter") {sendMessage();
-  return;
-  }
-handleTyping();
-});
-document.getElementById("msg").addEventListener("keydown", function(e) {
-  if (e.key !== "Enter") handleTyping();
-});
-function handleTyping() {
-  if (!socket || !currentGroup || !currentUser) return;
-  console.log("Typing as:", currentUserName);
-  // Emit typing start only once until they stop
-  if (!isTyping) {
-    isTyping = true;
-    socket.emit("typing", {
-      groupId: currentGroup,
-      userId: currentUser,
-      name: currentUserName   // we'll set this at login — see Step 6
-    });
-  }
-
-  // Reset the stop-typing timer on every keystroke
-  clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(function() {
-    isTyping = false;
-    socket.emit("stopTyping", {
-      groupId: currentGroup,
-      userId: currentUser
-    });
-  }, 1500);  // stop typing after 1.5s of no keypresses
-}
-
-function updateTypingIndicator() {
-  var indicator = document.getElementById("typingIndicator");
-  var names = Object.values(typingUsers).map(function(u) { return u.name; });
-
-  if (names.length === 0) {
-    indicator.style.display = "none";
-    indicator.innerHTML = "";
-    return;
-  }
-
-  var text = "";
-  if (names.length === 1) {
-    text = names[0] + " is typing";
-  } else if (names.length === 2) {
-    text = names[0] + " and " + names[1] + " are typing";
   } else {
-    text = names.length + " people are typing";
+    sendIt(plaintext, false);
   }
-
-  indicator.style.display = "flex";
-  indicator.style.alignItems = "center";
-  indicator.style.gap = "8px";
-  indicator.style.padding = "6px 24px 2px 24px";
-  indicator.style.color = "#94a3b8";
-  indicator.style.fontSize = "13px";
-  indicator.style.fontStyle = "italic";
-  indicator.style.background = "#0f172a";
-  indicator.style.minHeight = "28px";
-  indicator.innerHTML =
-    '<div class="typing-dots"><span></span><span></span><span></span></div>' +
-    '<span>' + text + '</span>';
 }
 
 // ─── Render ───────────────────────────────────────────────
@@ -1073,64 +1098,63 @@ function render(msg) {
   if (existing) existing.remove();
 
   var div = document.createElement("div");
-  div.id = "msg-" + msg._id;
+  div.id  = "msg-" + msg._id;
 
   var senderId = (msg.senderId && msg.senderId._id) ? msg.senderId._id : msg.senderId;
-  var me = (senderId && senderId.toString()) === currentUser;
-
+  var me       = (senderId && senderId.toString()) === currentUser;
   div.className = "message " + (me ? "sent" : "received");
 
-  var time = new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  var time       = new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   var senderName = (msg.senderId && msg.senderId.name) ? msg.senderId.name : "";
-  var visibility = (msg.visibleTo && msg.visibleTo.length > 0)
-    ? ("🔒 " + msg.visibleTo.length + " only")
-    : "👁 Everyone";
+  var visibility = (msg.visibleTo && msg.visibleTo.length > 0) ? ("🔒 " + msg.visibleTo.length + " only") : "👁 Everyone";
 
-  // Build inner HTML safely using DOM (no template literals with user content)
   var msgBody = document.createElement("div");
   msgBody.className = "msg-body";
 
+  // ✅ Sender name row with presence dot (only one declaration)
   if (!me && senderName) {
-    var nameEl = document.createElement("small");
-    nameEl.style.cssText = "opacity:0.6;display:block;margin-bottom:4px;";
-    nameEl.textContent = senderName;
-    msgBody.appendChild(nameEl);
+    var nameRow   = document.createElement("div");
+    nameRow.style.cssText = "display:flex;align-items:center;gap:5px;margin-bottom:4px;";
+    var senderDot = document.createElement("span");
+    senderDot.className = "presence-dot" + (onlineUserIds.has(senderId.toString()) ? " online" : "");
+    senderDot.id = "msgdot-" + senderId;
+    var nameLabel = document.createElement("small");
+    nameLabel.style.cssText = "opacity:0.6;";
+    nameLabel.textContent = senderName;
+    nameRow.appendChild(senderDot);
+    nameRow.appendChild(nameLabel);
+    msgBody.appendChild(nameRow);
   }
-  if (!me && senderName) {
-  var nameRow = document.createElement("div");
-  nameRow.style.cssText = "display:flex;align-items:center;gap:5px;margin-bottom:4px;";
 
-  var senderDot = document.createElement("span");
-  senderDot.className = "presence-dot" + (onlineUserIds.has(senderId.toString()) ? " online" : "");
-  senderDot.id = "msgdot-" + senderId;
-
-  var nameEl = document.createElement("small");
-  nameEl.style.cssText = "opacity:0.6;";
-  nameEl.textContent = senderName;
-
-  nameRow.appendChild(senderDot);
-  nameRow.appendChild(nameEl);
-  msgBody.appendChild(nameRow);
-}
-
+  // ✅ Text — decrypt if needed
   var textEl = document.createElement("span");
-  textEl.textContent = msg.text;
+  textEl.textContent = "...";
   msgBody.appendChild(textEl);
+
+  if (msg.isEncrypted && CryptoEngine.hasKey(currentGroup)) {
+    CryptoEngine.decrypt(currentGroup, msg.text).then(function(plain) {
+      textEl.textContent = plain;
+    });
+  } else if (msg.isEncrypted) {
+    textEl.textContent = "🔐 [encrypted — import the group key to read]";
+    textEl.style.color = "#94a3b8";
+    textEl.style.fontStyle = "italic";
+  } else {
+    textEl.textContent = msg.text;
+  }
 
   var metaEl = document.createElement("small");
   metaEl.style.cssText = "opacity:0.65;display:block;margin-top:4px;";
   metaEl.textContent = time + " · " + visibility;
   msgBody.appendChild(metaEl);
 
-  // After metaEl is appended, add scheduled badge if applicable
-if (msg.type === "timed") {
-  var badge = document.createElement("span");
-  badge.className = "scheduled-badge";
-  badge.textContent = "⏰ Scheduled";
-  msgBody.appendChild(badge);
-}
+  if (msg.type === "timed") {
+    var badge = document.createElement("span");
+    badge.className = "scheduled-badge";
+    badge.textContent = "⏰ Scheduled";
+    msgBody.appendChild(badge);
+  }
 
-  // Emoji picker
   var picker = document.createElement("div");
   picker.className = "emoji-picker";
   picker.id = "picker-" + msg._id;
@@ -1142,7 +1166,6 @@ if (msg.type === "timed") {
     picker.appendChild(btn);
   });
 
-  // Reaction bar
   var reactionBar = document.createElement("div");
   reactionBar.className = "reaction-bar";
   reactionBar.id = "reactions-" + msg._id;
@@ -1152,14 +1175,8 @@ if (msg.type === "timed") {
   div.appendChild(reactionBar);
   div.appendChild(picker);
 
-  div.addEventListener("mouseenter", function() {
-    picker.style.opacity = "1";
-    picker.style.pointerEvents = "auto";
-  });
-  div.addEventListener("mouseleave", function() {
-    picker.style.opacity = "0";
-    picker.style.pointerEvents = "none";
-  });
+  div.addEventListener("mouseenter", function() { picker.style.opacity = "1"; picker.style.pointerEvents = "auto"; });
+  div.addEventListener("mouseleave", function() { picker.style.opacity = "0"; picker.style.pointerEvents = "none"; });
 
   var messagesDiv = document.getElementById("messages");
   messagesDiv.appendChild(div);
@@ -1169,44 +1186,29 @@ if (msg.type === "timed") {
 // ─── Reactions ────────────────────────────────────────────
 function buildReactionHTML(reactions, msgId) {
   if (!reactions || reactions.length === 0) return "";
-
   var grouped = {};
   reactions.forEach(function(r) {
     if (!grouped[r.emoji]) grouped[r.emoji] = { count: 0, users: [] };
     grouped[r.emoji].count++;
     grouped[r.emoji].users.push(r.userId);
   });
-
   return Object.keys(grouped).map(function(emoji) {
-    var data  = grouped[emoji];
-    var isMine = data.users.some(function(id) {
-      return id && id.toString() === currentUser;
-    });
-    var label = data.count + " reaction" + (data.count > 1 ? "s" : "");
-    return (
-      '<span class="reaction-chip ' + (isMine ? "mine" : "") + '"' +
+    var data   = grouped[emoji];
+    var isMine = data.users.some(function(id) { return id && id.toString() === currentUser; });
+    var label  = data.count + " reaction" + (data.count > 1 ? "s" : "");
+    return '<span class="reaction-chip ' + (isMine ? "mine" : "") + '"' +
       ' onclick="sendReaction(\'' + msgId + '\', \'' + emoji + '\')"' +
-      ' title="' + label + '">' +
-      emoji + ' ' + data.count +
-      '</span>'
-    );
+      ' title="' + label + '">' + emoji + ' ' + data.count + '</span>';
   }).join("");
 }
 
-async function sendReaction(messageId, emoji) {
+function sendReaction(messageId, emoji) {
   if (!token) return;
-  try {
-    await fetch("http://localhost:5000/api/messages/" + messageId + "/react", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + token
-      },
-      body: JSON.stringify({ emoji: emoji })
-    });
-  } catch(err) {
-    console.error("Reaction error:", err);
-  }
+  fetch("http://localhost:5000/api/messages/" + messageId + "/react", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ emoji: emoji })
+  }).catch(function(err) { console.error("Reaction error:", err); });
 }
 </script>
 </body>

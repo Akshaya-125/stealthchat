@@ -16,6 +16,7 @@ const messageRoutes = require("./routes/messageRoutes");
 
 const app = express();
 
+
 // ✅ CORS FIX (IMPORTANT)
 app.use(cors());
 app.use(express.json());
@@ -49,6 +50,12 @@ app.use("/api/messages", messageRoutes);
 const { startScheduler } = require("./routes/messageRoutes");
 startScheduler(io);   // ← starts the 10-second delivery loop
 // 🔥 SOCKET
+const path = require("path");
+
+// Add this AFTER your routes
+app.get("/", function(req, res) {
+  res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
 // Track online users globally
 const onlineUsers = new Set();
 
