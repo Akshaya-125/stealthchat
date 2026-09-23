@@ -5,1210 +5,1086 @@
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
 body { 
-  margin: 0; 
   display: flex; 
   height: 100vh; 
-  font-family: Arial, sans-serif; 
-  background: #0f172a; 
-  color: #f1f5f9;
+  font-family: 'Segoe UI', Arial, sans-serif; 
+  background: #0a0a1a; 
+  color: #e2e8f0;
   overflow: hidden;
 }
+
+/* ── Sidebar ── */
 .sidebar { 
-  width: 30%; 
-  min-width: 260px;
-  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); 
-  padding: 20px; 
+  width: 300px;
+  min-width: 300px;
+  background: linear-gradient(180deg, #0f0f2e 0%, #0a0a1a 100%); 
+  padding: 0;
   overflow-y: auto;
-  border-right: 1px solid #334155;
-  box-sizing: border-box;
+  border-right: 1px solid rgba(139,92,246,0.2);
+  display: flex;
+  flex-direction: column;
 }
-.chat { width:70%; display:flex; flex-direction:column; background:#111827; }
+
+.sidebar-header {
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(59,130,246,0.1));
+  border-bottom: 1px solid rgba(139,92,246,0.2);
+}
+
+.sidebar-header h2 {
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 12px;
+}
+
+.sidebar-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.sidebar-section h4 {
+  font-size: 11px;
+  font-weight: 600;
+  color: #6366f1;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+/* ── Auth inputs ── */
+.auth-input {
+  width: 100%;
+  padding: 10px 14px;
+  margin: 4px 0;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.auth-input:focus { border-color: #7c3aed; }
+.auth-input::placeholder { color: #64748b; }
+
+/* ── Buttons ── */
+.btn {
+  width: 100%;
+  padding: 10px;
+  margin: 4px 0;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s;
+  letter-spacing: 0.3px;
+}
+.btn-primary { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: white; }
+.btn-primary:hover { background: linear-gradient(135deg, #6d28d9, #4338ca); transform: translateY(-1px); }
+.btn-success { background: linear-gradient(135deg, #059669, #0891b2); color: white; }
+.btn-success:hover { background: linear-gradient(135deg, #047857, #0e7490); transform: translateY(-1px); }
+.btn-warning { background: linear-gradient(135deg, #d97706, #b45309); color: white; }
+.btn-warning:hover { background: linear-gradient(135deg, #b45309, #92400e); transform: translateY(-1px); }
+.btn-danger  { background: linear-gradient(135deg, #dc2626, #b91c1c); color: white; }
+.btn-danger:hover  { background: linear-gradient(135deg, #b91c1c, #991b1b); transform: translateY(-1px); }
+.btn-teal   { background: linear-gradient(135deg, #0891b2, #0e7490); color: white; }
+.btn-teal:hover   { transform: translateY(-1px); }
+.btn-ghost  { background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.1); }
+.btn-ghost:hover  { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+.btn-row { display: flex; gap: 8px; }
+.btn-row .btn { margin: 0; }
+
+/* ── Group list ── */
+.group-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  margin: 3px 0;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.group-item:hover { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.2); }
+.group-item.active { background: linear-gradient(135deg, rgba(124,58,237,0.25), rgba(79,70,229,0.2)); border-color: rgba(139,92,246,0.4); }
+.group-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #7c3aed, #4f46e5); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.group-info { flex: 1; min-width: 0; }
+.group-name { font-size: 13px; font-weight: 600; color: #e2e8f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.group-count { font-size: 11px; color: #64748b; }
+
+/* ── Member tags ── */
+.member-wrapper { display: inline-flex; align-items: center; gap: 5px; margin: 2px; }
+.member-tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+.group-tag { background: rgba(5,150,105,0.2); color: #34d399; border: 1px solid rgba(5,150,105,0.3); }
+.visible-tag { background: rgba(99,102,241,0.2); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); }
+
+/* ── Presence dots ── */
+.presence-dot { width: 7px; height: 7px; border-radius: 50%; background: #334155; flex-shrink: 0; transition: all 0.3s; }
+.presence-dot.online { background: #10b981; box-shadow: 0 0 6px rgba(16,185,129,0.6); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { box-shadow: 0 0 4px rgba(16,185,129,0.4); } 50% { box-shadow: 0 0 10px rgba(16,185,129,0.8); } }
+
+/* ── Info boxes ── */
+.info-box { padding: 10px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; font-size: 12px; }
+
+/* ── Encryption panel ── */
+.encrypt-panel { padding: 14px; background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2); border-radius: 12px; margin-top: 10px; }
+.encrypt-status { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.encrypt-icon { font-size: 20px; }
+.encrypt-label { font-size: 12px; font-weight: 600; }
+
+/* ── Chat area ── */
+.chat { flex: 1; display: flex; flex-direction: column; background: #0a0a1a; min-width: 0; }
+
+.chat-header {
+  padding: 16px 24px;
+  background: rgba(15,15,46,0.8);
+  border-bottom: 1px solid rgba(139,92,246,0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  backdrop-filter: blur(10px);
+}
+.chat-header-icon { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #7c3aed, #4f46e5); display: flex; align-items: center; justify-content: center; font-size: 18px; }
+.chat-header-name { font-size: 16px; font-weight: 700; color: #e2e8f0; }
+.chat-header-sub { font-size: 12px; color: #64748b; }
+.chat-header-enc { margin-left: auto; font-size: 11px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+.chat-header-enc.on  { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+.chat-header-enc.off { background: rgba(100,116,139,0.15); color: #64748b; border: 1px solid rgba(100,116,139,0.2); }
+
 .messages { 
-  flex:1; 
-  padding:20px; 
-  overflow:auto; 
-  background:#0f172a;
+  flex: 1; 
+  padding: 20px 24px; 
+  overflow-y: auto;
+  background: #0a0a1a;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
+.messages::-webkit-scrollbar { width: 4px; }
+.messages::-webkit-scrollbar-track { background: transparent; }
+.messages::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }
+
+/* ── Messages ── */
 .message { 
-  padding:12px 16px; 
-  margin:8px 0; 
-  border-radius:18px; 
-  max-width:70%; 
-  word-wrap:break-word;
-  animation: slideIn 0.3s ease;
+  padding: 10px 14px; 
+  border-radius: 16px; 
+  max-width: 65%; 
+  word-wrap: break-word;
+  animation: slideUp 0.25s ease;
   position: relative;
 }
-@keyframes slideIn {
-  from { opacity:0; transform:translateY(20px); }
-  to { opacity:1; transform:translateY(0); }
-}
+@keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
 .sent { 
-  background:linear-gradient(135deg, #3b82f6, #1d4ed8); 
-  margin-left:auto; 
-  color:white;
-  border-bottom-right-radius:4px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 15px rgba(124,58,237,0.3);
 }
 .received { 
-  background:#1e293b; 
-  color:#f1f5f9;
-  border-bottom-left-radius:4px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-bottom-left-radius: 4px;
 }
-.input { 
-  display:flex; 
-  padding:20px; 
-  background:#111827;
-  border-top:1px solid #334155;
-}
-.input input { 
-  flex:1; 
-  padding:14px 18px; 
-  border:none; 
-  border-radius:25px; 
-  background:#1e293b;
-  color:#f1f5f9;
-  outline:none;
-  margin-right:10px;
-  width: auto;
-}
-.input button {
-  padding:14px 24px;
-  background:linear-gradient(135deg, #10b981, #059669);
-  color:white;
-  border:none;
-  border-radius:25px;
-  cursor:pointer;
-  font-weight:bold;
-  width: auto;
-}
-input, button { font-size:14px; }
-h3 { margin:0 0 15px 0; color:#f1f5f9; font-size:16px; }
-h4 { margin:10px 0 8px 0; color:#94a3b8; font-size:14px; font-weight:500; }
-hr { border:none; height:1px; background:#334155; margin:20px 0; }
-button { 
-  width:100%; 
-  padding:12px; 
-  margin:5px 0; 
-  background:#3b82f6; 
-  color:white; 
-  border:none; 
-  border-radius:8px; 
-  cursor:pointer;
-  font-weight:500;
-}
-button:hover { background:#2563eb; }
-input { 
-  width:100%; 
-  padding:10px; 
-  margin:5px 0; 
-  background:#334155; 
-  border:none; 
-  border-radius:8px; 
-  color:#f1f5f9;
-  box-sizing:border-box;
-}
-.member-tag {
-  display:inline-block;
-  padding:4px 10px;
-  margin:2px;
-  border-radius:12px;
-  font-size:12px;
-  font-weight:500;
-}
-.group-tag { background:#059669; color:white; }
-.visible-tag { background:#3b82f6; color:white; }
-.visibility-btn { 
-  background:#10b981 !important; 
-  font-size:12px;
-  margin-top:10px;
-}
-.visibility-btn:hover { background:#059669 !important; }
 
-/* Emoji reactions */
 .msg-body { position: relative; }
+.msg-text { font-size: 14px; line-height: 1.5; color: #e2e8f0; }
+.msg-meta { font-size: 11px; opacity: 0.6; margin-top: 4px; }
+.msg-sender { font-size: 11px; font-weight: 600; color: #a78bfa; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
+
+/* ── Emoji picker ── */
 .emoji-picker {
   position: absolute;
-  top: -42px;
-  right: 0;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 20px;
-  padding: 4px 8px;
+  top: -44px;
+  background: #1e1b4b;
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 24px;
+  padding: 6px 10px;
   display: flex;
   gap: 4px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s;
   z-index: 100;
   white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
 }
-.sent .emoji-picker { right: 0; left: auto; }
-.received .emoji-picker { left: 0; right: auto; }
-.emoji-btn {
-  font-size: 18px;
-  cursor: pointer;
-  padding: 2px;
-  border-radius: 6px;
-  transition: transform 0.1s;
-  line-height: 1;
-}
+.sent .emoji-picker { right: 0; }
+.received .emoji-picker { left: 0; }
+.emoji-btn { font-size: 17px; cursor: pointer; padding: 2px 3px; border-radius: 6px; transition: transform 0.1s; }
 .emoji-btn:hover { transform: scale(1.3); }
-.reaction-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin-top: 6px;
-}
-.reaction-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: #334155;
-  border: 1px solid #475569;
-  border-radius: 12px;
-  padding: 2px 8px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-  user-select: none;
-}
-.reaction-chip:hover { background: #475569; transform: scale(1.05); }
-.reaction-chip.mine {
-  background: #1e3a5f;
-  border-color: #3b82f6;
-  color: #93c5fd;
-}
 
-/* Typing indicator */
+/* ── Reactions ── */
+.reaction-bar { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.reaction-chip {
+  display: inline-flex; align-items: center; gap: 3px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 20px; padding: 2px 8px;
+  font-size: 12px; cursor: pointer;
+  transition: all 0.15s; user-select: none;
+}
+.reaction-chip:hover { background: rgba(139,92,246,0.2); transform: scale(1.05); }
+.reaction-chip.mine { background: rgba(124,58,237,0.25); border-color: rgba(139,92,246,0.5); color: #a78bfa; }
+
+/* ── Typing indicator ── */
 #typingIndicator {
-  height: 30px;
-  padding: 0 24px;
-  background: #0f172a;
-  color: #94a3b8;
-  font-size: 13px;
-  font-style: italic;
-  display: none;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+  height: 32px; padding: 0 24px;
+  color: #64748b; font-size: 12px; font-style: italic;
+  display: none; align-items: center; gap: 8px;
 }
-.typing-dots {
-  display: inline-flex;
-  gap: 3px;
-  align-items: center;
-}
+.typing-dots { display: inline-flex; gap: 3px; align-items: center; }
 .typing-dots span {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #94a3b8;
-  animation: bounce 1.2s infinite;
-  display: inline-block;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #7c3aed; animation: bounce 1.2s infinite;
 }
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-@keyframes bounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30%            { transform: translateY(-5px); opacity: 1; }
-}
+@keyframes bounce { 0%,60%,100% { transform:translateY(0); opacity:0.4; } 30% { transform:translateY(-5px); opacity:1; } }
 
-/* Online presence */
-.member-wrapper {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin: 2px;
-}
-.presence-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #475569;
-  flex-shrink: 0;
-  transition: background 0.3s ease;
-}
-.presence-dot.online {
-  background: #10b981;
-  box-shadow: 0 0 6px rgba(16,185,129,0.6);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { box-shadow: 0 0 4px rgba(16,185,129,0.4); }
-  50%       { box-shadow: 0 0 10px rgba(16,185,129,0.8); }
-}
-
-/* Schedule */
-#scheduleBtn {
-  background: #7c3aed;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 42px;
-  height: 42px;
-  font-size: 18px;
-  cursor: pointer;
+/* ── Input area ── */
+.input-area { 
+  padding: 16px 24px;
+  background: rgba(15,15,46,0.6);
+  border-top: 1px solid rgba(139,92,246,0.15);
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  margin-right: 8px;
-  transition: background 0.2s;
-  padding: 0;
+  gap: 10px;
+  backdrop-filter: blur(10px);
 }
-#scheduleBtn:hover { background: #6d28d9; }
-.scheduled-badge {
-  display: inline-block;
-  background: #7c3aed;
-  color: white;
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-top: 4px;
-}
-#scheduledPanel {
-  display: none;
-  position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 320px;
-  max-height: 400px;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 16px;
-  padding: 16px;
-  z-index: 1000;
-  overflow-y: auto;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-}
-.scheduled-item {
-  background: #334155;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin: 6px 0;
-  font-size: 13px;
-}
-.scheduled-item .sched-text { color: #f1f5f9; margin-bottom: 4px; word-break: break-word; }
-.scheduled-item .sched-time { color: #94a3b8; font-size: 12px; }
-.scheduled-item .sched-cancel {
-  background: #ef4444; color: white; border: none;
-  border-radius: 6px; padding: 3px 10px; font-size: 12px;
-  cursor: pointer; margin-top: 6px; width: auto;
-}
-#scheduleModal {
-  display: none;
-  position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 300px;
-  background: #1e293b;
-  border: 1px solid #334155;
-  border-radius: 16px;
-  padding: 20px;
-  z-index: 1001;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.5);
-}
-#scheduleDateTime {
-  width: 100%;
-  padding: 10px;
-  background: #334155;
-  border: 1px solid #475569;
-  border-radius: 8px;
-  color: #f1f5f9;
+.msg-input { 
+  flex: 1; 
+  padding: 12px 18px; 
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 24px; 
+  background: rgba(255,255,255,0.06);
+  color: #e2e8f0;
   font-size: 14px;
-  box-sizing: border-box;
-  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.msg-input:focus { border-color: #7c3aed; background: rgba(255,255,255,0.08); }
+.msg-input::placeholder { color: #475569; }
+.send-btn {
+  width: 44px; height: 44px;
+  background: linear-gradient(135deg, #7c3aed, #4f46e5);
+  border: none; border-radius: 50%;
+  cursor: pointer; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(124,58,237,0.4);
+}
+.send-btn:hover { transform: scale(1.05); box-shadow: 0 6px 18px rgba(124,58,237,0.5); }
+.sched-btn {
+  width: 40px; height: 40px;
+  background: rgba(124,58,237,0.15);
+  border: 1px solid rgba(124,58,237,0.3);
+  border-radius: 50%; cursor: pointer;
+  font-size: 16px; display: flex;
+  align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0; color: #a78bfa;
+}
+.sched-btn:hover { background: rgba(124,58,237,0.25); transform: scale(1.05); }
+
+/* ── Scheduled badge ── */
+.scheduled-badge {
+  display: inline-block; background: rgba(124,58,237,0.2);
+  color: #a78bfa; font-size: 10px; padding: 2px 8px;
+  border-radius: 10px; margin-top: 4px;
+  border: 1px solid rgba(124,58,237,0.3);
 }
 
-/* Encryption key display box */
-#keyDisplayBox {
-  display: none;
-  margin-top: 10px;
-  padding: 10px;
-  background: #0f172a;
-  border: 1px solid #334155;
-  border-radius: 8px;
-  word-break: break-all;
-  font-size: 11px;
-  color: #10b981;
-  cursor: pointer;
+/* ── Floating panels ── */
+.float-panel {
+  display: none; position: fixed;
+  bottom: 90px; right: 20px;
+  width: 320px; max-height: 420px;
+  background: #0f0f2e;
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 18px; padding: 18px;
+  z-index: 1000; overflow-y: auto;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
 }
+.float-panel h4 { color: #e2e8f0; font-size: 14px; margin-bottom: 14px; }
+.panel-close { float: right; cursor: pointer; color: #64748b; font-size: 18px; line-height: 1; }
+.panel-close:hover { color: #e2e8f0; }
+
+.scheduled-item {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; padding: 10px 12px; margin: 6px 0; font-size: 12px;
+}
+.sched-text { color: #e2e8f0; margin-bottom: 3px; word-break: break-word; }
+.sched-time { color: #64748b; }
+.sched-cancel-btn {
+  background: rgba(220,38,38,0.15); color: #f87171;
+  border: 1px solid rgba(220,38,38,0.2);
+  border-radius: 6px; padding: 3px 10px;
+  font-size: 11px; cursor: pointer; margin-top: 6px; width: auto;
+}
+
+/* Schedule modal */
+#scheduleModal {
+  display: none; position: fixed;
+  bottom: 90px; right: 20px; width: 300px;
+  background: #0f0f2e;
+  border: 1px solid rgba(139,92,246,0.25);
+  border-radius: 18px; padding: 20px;
+  z-index: 1001;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+#scheduleModal h4 { color: #e2e8f0; margin-bottom: 6px; }
+#scheduleDateTime {
+  width: 100%; padding: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 10px; color: #e2e8f0;
+  font-size: 13px; margin-bottom: 12px;
+  color-scheme: dark;
+}
+
+/* Privacy modal */
+.modal-overlay {
+  position: fixed; top:0; left:0; width:100vw; height:100vh;
+  background: rgba(0,0,0,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 99999;
+}
+.modal-box {
+  background: #0f0f2e;
+  border: 1px solid rgba(139,92,246,0.3);
+  border-radius: 20px; padding: 28px;
+  width: 360px; max-height: 80vh; overflow-y: auto;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.7);
+}
+.modal-box h3 { color: #e2e8f0; margin-bottom: 6px; }
+.modal-box p  { color: #64748b; font-size: 13px; margin-bottom: 16px; }
+.check-label {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px; margin: 5px 0; cursor: pointer;
+  transition: all 0.15s;
+}
+.check-label:hover { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.3); }
+.check-label input[type=checkbox] { width: 16px; height: 16px; accent-color: #7c3aed; cursor: pointer; }
+
+/* Splash */
+#splash {
+  position: fixed; width:100%; height:100%;
+  background: linear-gradient(135deg, #0f0f2e, #0a0a1a);
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  z-index: 9999; gap: 16px;
+}
+.splash-logo { font-size: 56px; font-weight: 800; background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+.splash-sub  { font-size: 15px; color: #475569; letter-spacing: 2px; text-transform: uppercase; }
+.splash-dots { display: flex; gap: 8px; margin-top: 8px; }
+.splash-dot  { width: 8px; height: 8px; border-radius: 50%; background: #7c3aed; animation: bounce 1.2s infinite; }
+.splash-dot:nth-child(2) { animation-delay: 0.2s; background: #60a5fa; }
+.splash-dot:nth-child(3) { animation-delay: 0.4s; background: #34d399; }
+
+/* Key input hidden style */
+.key-input-hidden {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(139,92,246,0.2);
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-size: 12px;
+  outline: none;
+  margin: 4px 0;
+  font-family: monospace;
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+.key-input-hidden::placeholder { color: #64748b; -webkit-text-security: none; text-security: none; }
+
+/* Scrollbar for sidebar */
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.3); border-radius: 2px; }
 </style>
 </head>
 
 <body>
 
-<div id="splash" style="position:fixed;width:100%;height:100%;background:linear-gradient(135deg,#1e293b,#0f172a);color:#3b82f6;display:flex;justify-content:center;align-items:center;font-size:48px;font-weight:bold;text-shadow:0 0 20px rgba(59,130,246,0.5);z-index:1000;">
-  StealthChat
+<div id="splash">
+  <div class="splash-logo">🔐 StealthChat</div>
+  <div class="splash-sub">Private · Encrypted · Real-time</div>
+  <div class="splash-dots">
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+    <div class="splash-dot"></div>
+  </div>
 </div>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
-  <h3>Authentication</h3>
-  <input id="email" placeholder="Email">
-  <input id="password" type="password" placeholder="Password">
-  <button onclick="signup()">Signup</button>
-  <button onclick="login()">Login</button>
+  <div class="sidebar-header">
+    <h2>🔐 StealthChat</h2>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="signup()" style="font-size:12px;">Sign Up</button>
+      <button class="btn btn-primary" onclick="login()" style="font-size:12px;">Login</button>
+    </div>
+    <input class="auth-input" id="email" placeholder="Email" style="margin-top:8px;">
+    <input class="auth-input" id="password" type="password" placeholder="Password">
+  </div>
 
-  <hr>
+  <div class="sidebar-section">
+    <h4>New Group</h4>
+    <input class="auth-input" id="groupName" placeholder="Group name...">
+    <button class="btn btn-success" onclick="createGroup()">+ Create Group</button>
+  </div>
 
-  <h4>Create Group</h4>
-  <input id="groupName" placeholder="Group Name">
-  <button onclick="createGroup()">Create Group</button>
+  <div class="sidebar-section" style="flex:1;">
+    <h4>My Groups</h4>
+    <div id="groupList"></div>
+  </div>
 
-  <h3>My Groups</h3>
-  <div id="groupList" style="max-height:200px;overflow:auto;"></div>
-
-  <hr>
-
+  <!-- Group Info (shown when group selected) -->
   <div id="groupInfo" style="display:none;">
-    <h4>Group Members</h4>
-    <div id="groupMembers" style="max-height:120px;overflow:auto;padding:10px;background:#1e293b;border-radius:8px;"></div>
+    <div class="sidebar-section">
+      <h4>Members</h4>
+      <div id="groupMembers" class="info-box" style="min-height:40px;"></div>
+    </div>
 
-    <h4>Visible To (Message Privacy)</h4>
-    <div id="visibleMembers" style="max-height:100px;overflow:auto;padding:10px;background:#1e293b;border-radius:8px;"></div>
-
-    <input id="newMember" placeholder="Add Member ID">
-    <button onclick="addMemberToGroup()" style="background:#f59e0b;margin-top:8px;">Add to Group</button>
-    <button onclick="toggleMemberVisibility()" class="visibility-btn">Toggle Message Privacy</button>
-    <button onclick="toggleScheduledPanel()" style="background:#7c3aed;margin-top:8px;">⏰ View Scheduled</button>
-
-    <!-- Encryption Panel -->
-    <div style="margin-top:12px;padding:12px;background:#1e293b;border-radius:10px;border:1px solid #334155;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-        <span id="encryptionStatus" style="font-size:18px;">🔓</span>
-        <span id="encryptionLabel" style="font-size:13px;color:#94a3b8;">No encryption</span>
+    <div class="sidebar-section">
+      <h4>Message Privacy</h4>
+      <div id="visibleMembers" class="info-box" style="min-height:36px;font-size:12px;"></div>
+      <input class="auth-input" id="newMember" placeholder="Add member by ID" style="margin-top:8px;">
+      <div class="btn-row" style="margin-top:4px;">
+        <button class="btn btn-warning" onclick="addMemberToGroup()" style="font-size:12px;">+ Add</button>
+        <button class="btn btn-teal" onclick="toggleMemberVisibility()" style="font-size:12px;">🔒 Privacy</button>
       </div>
+    </div>
 
-      <button onclick="generateAndSetKey()" style="background:#7c3aed;margin-bottom:6px;">
-        🔑 Generate Group Key
-      </button>
+    <div class="sidebar-section">
+      <h4>Scheduled</h4>
+      <button class="btn btn-ghost" onclick="toggleScheduledPanel()" style="font-size:12px;">⏰ View Queue</button>
+    </div>
 
-      <!-- Key display box — click to copy -->
-      <div id="keyDisplayBox" onclick="copyKeyFromBox()">
-        <div style="color:#94a3b8;font-size:10px;margin-bottom:4px;">Click to copy key:</div>
-        <div id="keyDisplayText"></div>
+    <div class="sidebar-section">
+      <h4>Encryption</h4>
+      <div class="encrypt-panel">
+        <div class="encrypt-status">
+          <span class="encrypt-icon" id="encryptionStatus">🔓</span>
+          <span class="encrypt-label" id="encryptionLabel" style="color:#64748b;">No encryption</span>
+        </div>
+        <button class="btn btn-primary" onclick="generateAndSetKey()" style="font-size:12px;margin-bottom:6px;">🔑 Generate Key</button>
+        <!-- Key input with hidden text (dots) -->
+        <input class="key-input-hidden" id="keyInput" placeholder="Paste group key here" type="password">
+        <div class="btn-row" style="margin-top:4px;">
+          <button class="btn btn-teal" onclick="importKeyFromInput()" style="font-size:12px;">📥 Import</button>
+          <button class="btn btn-success" onclick="exportCurrentKey()" style="font-size:12px;">📤 Copy Key</button>
+        </div>
       </div>
-
-      <input id="keyInput" placeholder="Paste key from another member" style="font-size:11px;">
-      <button onclick="importKeyFromInput()" style="background:#0891b2;margin-bottom:6px;">
-        📥 Import Key
-      </button>
-
-      <button onclick="exportCurrentKey()" style="background:#059669;">
-        📤 Export / Copy Key
-      </button>
     </div>
   </div>
 </div>
 
+<!-- CHAT AREA -->
 <div class="chat">
-  <div id="messages" class="messages"></div>
+  <!-- Chat header -->
+  <div class="chat-header" id="chatHeader" style="display:none;">
+    <div class="chat-header-icon" id="chatHeaderIcon">💬</div>
+    <div>
+      <div class="chat-header-name" id="chatHeaderName">Select a group</div>
+      <div class="chat-header-sub" id="chatHeaderSub">No group selected</div>
+    </div>
+    <div class="chat-header-enc off" id="chatHeaderEnc">🔓 Unencrypted</div>
+  </div>
+
+  <!-- Empty state -->
+  <div id="emptyState" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#334155;gap:12px;">
+    <div style="font-size:48px;">🔐</div>
+    <div style="font-size:18px;font-weight:600;">Select a group to start chatting</div>
+    <div style="font-size:13px;">Your messages are private and secure</div>
+  </div>
+
+  <div id="messages" class="messages" style="display:none;"></div>
   <div id="typingIndicator"></div>
 
-  <div id="scheduledPanel">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h4 style="margin:0;color:#f1f5f9;">⏰ Scheduled Messages</h4>
-      <span onclick="toggleScheduledPanel()" style="cursor:pointer;color:#94a3b8;font-size:18px;">✕</span>
-    </div>
+  <!-- Scheduled panel -->
+  <div class="float-panel" id="scheduledPanel">
+    <span class="panel-close" onclick="toggleScheduledPanel()">✕</span>
+    <h4>⏰ Scheduled Messages</h4>
     <div id="scheduledList"></div>
   </div>
 
+  <!-- Schedule modal -->
   <div id="scheduleModal">
-    <h4 style="color:#f1f5f9;">⏰ Schedule Message</h4>
-    <p style="color:#94a3b8;font-size:13px;margin:0 0 10px 0;">
-      Message: "<span id="schedulePreview" style="color:#f1f5f9;"></span>"
-    </p>
+    <h4>⏰ Schedule Message</h4>
+    <p style="color:#64748b;font-size:12px;margin:4px 0 12px 0;">Send at a specific time</p>
+    <div style="background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);border-radius:8px;padding:8px 12px;font-size:12px;color:#a78bfa;margin-bottom:12px;word-break:break-all;" id="schedulePreviewBox"></div>
     <input type="datetime-local" id="scheduleDateTime">
-    <div style="display:flex;gap:8px;">
-      <button onclick="confirmSchedule()" style="flex:1;background:#7c3aed;color:white;padding:10px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;width:auto;">Schedule</button>
-      <button onclick="closeScheduleModal()" style="flex:1;background:#475569;color:white;padding:10px;border:none;border-radius:8px;cursor:pointer;width:auto;">Cancel</button>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn btn-primary" onclick="confirmSchedule()" style="font-size:13px;">Schedule</button>
+      <button class="btn btn-ghost" onclick="closeScheduleModal()" style="font-size:13px;">Cancel</button>
     </div>
   </div>
 
-  <div class="input">
-    <input id="msg" placeholder="Type a stealth message...">
-    <button id="scheduleBtn" onclick="openScheduleModal()" title="Schedule message">⏰</button>
-    <button onclick="sendMessage()">Send</button>
+  <!-- Input -->
+  <div class="input-area" id="inputArea" style="display:none;">
+    <button class="sched-btn" onclick="openScheduleModal()" title="Schedule message">⏰</button>
+    <input class="msg-input" id="msg" placeholder="Type a message...">
+    <button class="send-btn" onclick="sendMessage()">➤</button>
   </div>
 </div>
 
 <script>
-// ─── Splash ───────────────────────────────────────────────
+// ── Splash ──────────────────────────────────────────────────
 setTimeout(function() {
-  var splash = document.getElementById("splash");
-  splash.style.transition = "opacity 0.5s ease";
-  splash.style.opacity = "0";
-  setTimeout(function() { splash.style.display = "none"; }, 500);
-}, 2500);
+  var s = document.getElementById("splash");
+  s.style.transition = "opacity 0.6s ease";
+  s.style.opacity = "0";
+  setTimeout(function() { s.style.display = "none"; }, 600);
+}, 2000);
 
-// ─── E2E Crypto Engine ────────────────────────────────────
+// ── Crypto Engine ───────────────────────────────────────────
 var CryptoEngine = {
   keys: {},
-
   generateGroupKey: function() {
-    return crypto.subtle.generateKey(
-      { name: "AES-GCM", length: 256 },
-      true,
-      ["encrypt", "decrypt"]
-    );
+    return crypto.subtle.generateKey({ name:"AES-GCM", length:256 }, true, ["encrypt","decrypt"]);
   },
-
   exportKey: function(key) {
     return crypto.subtle.exportKey("raw", key).then(function(raw) {
       return btoa(String.fromCharCode.apply(null, new Uint8Array(raw)));
     });
   },
-
-  importKey: function(base64) {
-    var raw = Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); });
-    return crypto.subtle.importKey(
-      "raw", raw,
-      { name: "AES-GCM", length: 256 },
-      true,
-      ["encrypt", "decrypt"]
-    );
+  importKey: function(b64) {
+    var raw = Uint8Array.from(atob(b64), function(c){ return c.charCodeAt(0); });
+    return crypto.subtle.importKey("raw", raw, { name:"AES-GCM", length:256 }, true, ["encrypt","decrypt"]);
   },
-
-  encrypt: function(groupId, plaintext) {
+  encrypt: function(groupId, text) {
     var key = CryptoEngine.keys[groupId];
-    if (!key) return Promise.reject(new Error("No key for group"));
-    var iv  = crypto.getRandomValues(new Uint8Array(12));
-    var enc = new TextEncoder();
-    return crypto.subtle.encrypt(
-      { name: "AES-GCM", iv: iv }, key, enc.encode(plaintext)
-    ).then(function(ciphertext) {
-      var combined = new Uint8Array(12 + ciphertext.byteLength);
-      combined.set(iv, 0);
-      combined.set(new Uint8Array(ciphertext), 12);
-      return btoa(String.fromCharCode.apply(null, combined));
-    });
-  },
-
-  decrypt: function(groupId, base64) {
-    var key = CryptoEngine.keys[groupId];
-    if (!key) return Promise.resolve("[encrypted - no key]");
-    try {
-      var combined   = Uint8Array.from(atob(base64), function(c) { return c.charCodeAt(0); });
-      var iv         = combined.slice(0, 12);
-      var ciphertext = combined.slice(12);
-      return crypto.subtle.decrypt(
-        { name: "AES-GCM", iv: iv }, key, ciphertext
-      ).then(function(dec) {
-        return new TextDecoder().decode(dec);
-      }).catch(function() {
-        return "[could not decrypt]";
+    if (!key) return Promise.reject(new Error("No key"));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    return crypto.subtle.encrypt({ name:"AES-GCM", iv:iv }, key, new TextEncoder().encode(text))
+      .then(function(ct) {
+        var combined = new Uint8Array(12 + ct.byteLength);
+        combined.set(iv); combined.set(new Uint8Array(ct), 12);
+        return btoa(String.fromCharCode.apply(null, combined));
       });
-    } catch(e) {
-      return Promise.resolve("[could not decrypt]");
-    }
   },
-
-  setKey: function(groupId, base64Key) {
-    return CryptoEngine.importKey(base64Key).then(function(key) {
-      CryptoEngine.keys[groupId] = key;
-    });
+  decrypt: function(groupId, b64) {
+    var key = CryptoEngine.keys[groupId];
+    if (!key) return Promise.resolve("[encrypted]");
+    try {
+      var combined = Uint8Array.from(atob(b64), function(c){ return c.charCodeAt(0); });
+      return crypto.subtle.decrypt({ name:"AES-GCM", iv:combined.slice(0,12) }, key, combined.slice(12))
+        .then(function(dec){ return new TextDecoder().decode(dec); })
+        .catch(function(){ return "[could not decrypt]"; });
+    } catch(e) { return Promise.resolve("[could not decrypt]"); }
   },
-
-  hasKey: function(groupId) {
-    return !!CryptoEngine.keys[groupId];
-  }
+  setKey: function(groupId, b64) {
+    return CryptoEngine.importKey(b64).then(function(k){ CryptoEngine.keys[groupId] = k; });
+  },
+  hasKey: function(groupId) { return !!CryptoEngine.keys[groupId]; }
 };
 
-// ─── Global State ─────────────────────────────────────────
-var socket          = null;
-var token           = "";
-var currentUser     = "";
-var currentUserName = "";
-var currentGroup    = "";
-var privacySelections = {};
-var typingUsers     = {};
-var typingTimeout   = null;
-var isTyping        = false;
-var onlineUserIds   = new Set();
-var pendingScheduleText = "";
-var EMOJI_LIST      = ["👍","❤️","😂","😮","😢","🔥","👀","🤝"];
+// ── State ───────────────────────────────────────────────────
+var socket = null, token = "", currentUser = "", currentUserName = "";
+var currentGroup = "", currentGroupName = "";
+var privacySelections = {}, typingUsers = {}, typingTimeout = null, isTyping = false;
+var onlineUserIds = new Set(), pendingScheduleText = "";
+var EMOJI_LIST = ["👍","❤️","😂","😮","😢","🔥","👀","🤝"];
 
-// ─── Encryption UI ────────────────────────────────────────
+// ── Encryption UI ───────────────────────────────────────────
 function generateAndSetKey() {
   if (!currentGroup) return alert("Select a group first");
-
   CryptoEngine.generateGroupKey().then(function(key) {
-    return CryptoEngine.exportKey(key).then(function(base64) {
+    return CryptoEngine.exportKey(key).then(function(b64) {
       CryptoEngine.keys[currentGroup] = key;
       updateEncryptionStatus(true);
-
-      // Show key in display box (fallback for clipboard issues)
-      var box = document.getElementById("keyDisplayBox");
-      document.getElementById("keyDisplayText").textContent = base64;
-      box.style.display = "block";
-
-      // Try clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(base64).then(function() {
-          alert("Key generated and copied to clipboard!\n\nAlso shown below — click it to copy again.\n\nShare with group members via WhatsApp/Signal.");
-        }).catch(function() {
-          alert("Key generated!\n\nClipboard blocked — click the green box below to copy the key.");
-        });
-      } else {
-        alert("Key generated!\n\nClick the green box below to copy the key, then share with members.");
-      }
+      // Copy silently without showing the key
+      copyToClipboard(b64, "🔑 Group key generated and copied to clipboard!\n\nShare it with members via WhatsApp or Signal.\nDo NOT share it through StealthChat.");
     });
-  }).catch(function(err) {
-    alert("Error generating key: " + err.message);
-    console.error(err);
-  });
-}
-
-function copyKeyFromBox() {
-  var text = document.getElementById("keyDisplayText").textContent;
-  if (!text) return;
-
-  if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(text).then(function() {
-      alert("Key copied to clipboard!");
-    }).catch(function() {
-      // Manual fallback
-      var ta = document.createElement("textarea");
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand("copy");
-      document.body.removeChild(ta);
-      alert("Key copied!");
-    });
-  } else {
-    var ta = document.createElement("textarea");
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    document.body.removeChild(ta);
-    alert("Key copied!");
-  }
+  }).catch(function(err) { alert("Error: " + err.message); });
 }
 
 function importKeyFromInput() {
-  var keyVal = document.getElementById("keyInput").value.trim();
-  if (!keyVal) return alert("Paste a key first");
+  var val = document.getElementById("keyInput").value.trim();
+  if (!val) return alert("Paste a key first");
   if (!currentGroup) return alert("Select a group first");
-
-  CryptoEngine.setKey(currentGroup, keyVal).then(function() {
+  CryptoEngine.setKey(currentGroup, val).then(function() {
     document.getElementById("keyInput").value = "";
     updateEncryptionStatus(true);
-    alert("Key imported! Messages will now be decrypted.");
+    alert("Key imported! Messages are now decrypted.");
+    document.getElementById("messages").innerHTML = "";
     loadMessages();
-  }).catch(function() {
-    alert("Invalid key — make sure you pasted it correctly");
-  });
+  }).catch(function() { alert("Invalid key — check you pasted it correctly"); });
 }
 
 function exportCurrentKey() {
   if (!currentGroup) return alert("Select a group first");
   if (!CryptoEngine.hasKey(currentGroup)) return alert("No key — generate one first");
-
-  CryptoEngine.exportKey(CryptoEngine.keys[currentGroup]).then(function(base64) {
-    // Show in box
-    var box = document.getElementById("keyDisplayBox");
-    document.getElementById("keyDisplayText").textContent = base64;
-    box.style.display = "block";
-    copyKeyFromBox();
+  CryptoEngine.exportKey(CryptoEngine.keys[currentGroup]).then(function(b64) {
+    copyToClipboard(b64, "Key copied! Share with group members via a secure channel.");
   });
 }
 
-function updateEncryptionStatus(isEncrypted) {
-  var status = document.getElementById("encryptionStatus");
-  var label  = document.getElementById("encryptionLabel");
-  if (!status || !label) return;
-  if (isEncrypted) {
-    status.textContent = "🔐";
-    label.textContent  = "E2E Encrypted";
-    label.style.color  = "#10b981";
+function copyToClipboard(text, successMsg) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(function() {
+      alert(successMsg);
+    }).catch(function() { fallbackCopy(text, successMsg); });
+  } else { fallbackCopy(text, successMsg); }
+}
+
+function fallbackCopy(text, msg) {
+  var ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.position = "fixed";
+  ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  document.execCommand("copy");
+  document.body.removeChild(ta);
+  alert(msg);
+}
+
+function updateEncryptionStatus(isEnc) {
+  var s = document.getElementById("encryptionStatus");
+  var l = document.getElementById("encryptionLabel");
+  var h = document.getElementById("chatHeaderEnc");
+  if (!s) return;
+  if (isEnc) {
+    s.textContent = "🔐"; l.textContent = "E2E Encrypted"; l.style.color = "#34d399";
+    if (h) { h.textContent = "🔐 Encrypted"; h.className = "chat-header-enc on"; }
   } else {
-    status.textContent = "🔓";
-    label.textContent  = "No encryption";
-    label.style.color  = "#94a3b8";
-    document.getElementById("keyDisplayBox").style.display = "none";
+    s.textContent = "🔓"; l.textContent = "No encryption"; l.style.color = "#64748b";
+    if (h) { h.textContent = "🔓 Unencrypted"; h.className = "chat-header-enc off"; }
   }
 }
 
-// ─── Auth ─────────────────────────────────────────────────
+// ── Auth ────────────────────────────────────────────────────
 function signup() {
-  var emailVal = document.getElementById("email").value;
-  var passVal  = document.getElementById("password").value;
-  if (!emailVal || !passVal) return alert("Enter email and password");
-
-  fetch("http://localhost:5000/api/auth/signup", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name: emailVal.split("@")[0], email: emailVal, password: passVal })
+  var e = document.getElementById("email").value;
+  var p = document.getElementById("password").value;
+  if (!e || !p) return alert("Enter email and password");
+  fetch("https://stealthchat-1.onrender.com/api/auth/signup", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ name: e.split("@")[0], email: e, password: p })
   })
-  .then(function(res) { return res.json().then(function(d) { return { s: res.status, d: d }; }); })
-  .then(function(r) {
-    if (r.s !== 201) return alert(r.d.message || "Signup failed");
-    alert("Signup success");
-  })
-  .catch(function(err) { alert("Signup error: " + err.message); });
+  .then(function(r){ return r.json().then(function(d){ return {s:r.status,d:d}; }); })
+  .then(function(r){ if(r.s!==201) return alert(r.d.message||"Signup failed"); alert("Signup success!"); })
+  .catch(function(err){ alert("Error: "+err.message); });
 }
 
 function login() {
-  var emailVal = document.getElementById("email").value;
-  var passVal  = document.getElementById("password").value;
-
-  fetch("http://localhost:5000/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email: emailVal, password: passVal })
+  var e = document.getElementById("email").value;
+  var p = document.getElementById("password").value;
+  fetch("https://stealthchat-1.onrender.com/api/auth/login", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ email: e, password: p })
   })
-  .then(function(res) { return res.json().then(function(d) { return { s: res.status, d: d }; }); })
-  .then(function(r) {
-    if (r.s !== 200) return alert(r.d.message || "Login failed");
-    token           = r.d.token;
-    currentUser     = r.d.user._id;
+  .then(function(r){ return r.json().then(function(d){ return {s:r.status,d:d}; }); })
+  .then(function(r){
+    if(r.s!==200) return alert(r.d.message||"Login failed");
+    token = r.d.token; currentUser = r.d.user._id;
     currentUserName = r.d.user.name || r.d.user.email || "Someone";
-    alert("Login success");
+    alert("Welcome, " + currentUserName + "!");
     loadGroups();
   })
-  .catch(function(err) { alert("Login error: " + err.message); });
+  .catch(function(err){ alert("Error: "+err.message); });
 }
 
-// ─── Groups ───────────────────────────────────────────────
+// ── Groups ──────────────────────────────────────────────────
 function loadGroups() {
   if (!token) return;
-  fetch("http://localhost:5000/api/groups/my", {
-    headers: { "Authorization": "Bearer " + token }
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(groups) {
-    var groupList = document.getElementById("groupList");
-    groupList.innerHTML = "";
-    groups.forEach(function(g) {
+  fetch("https://stealthchat-1.onrender.com/api/groups/my", { headers:{"Authorization":"Bearer "+token} })
+  .then(function(r){ return r.json(); })
+  .then(function(groups){
+    var gl = document.getElementById("groupList");
+    gl.innerHTML = "";
+    groups.forEach(function(g){
       var div = document.createElement("div");
-      div.textContent = g.name + " (" + g.members.length + " members)";
-      div.style.cssText = "cursor:pointer;padding:12px;margin:4px 0;border-radius:12px;" +
-        "transition:all 0.2s;background:" + (currentGroup === g._id ? "#3b82f6" : "#334155") + ";";
-      div.onmouseover = function() { if (currentGroup !== g._id) div.style.background = "#475569"; };
-      div.onmouseout  = function() { if (currentGroup !== g._id) div.style.background = "#334155"; };
-      div.onclick = function() { connectGroup(g._id); };
-      groupList.appendChild(div);
+      div.className = "group-item" + (currentGroup===g._id ? " active" : "");
+      div.innerHTML =
+        '<div class="group-icon">💬</div>' +
+        '<div class="group-info">' +
+          '<div class="group-name">' + g.name + '</div>' +
+          '<div class="group-count">' + g.members.length + ' members</div>' +
+        '</div>';
+      div.onclick = function(){ connectGroup(g._id, g.name); };
+      gl.appendChild(div);
     });
   })
-  .catch(function(err) { console.error("Load groups error:", err); });
+  .catch(function(err){ console.error(err); });
 }
 
 function createGroup() {
-  var nameVal = document.getElementById("groupName").value.trim();
-  if (!token || !nameVal) return alert("Login and enter a group name");
-  fetch("http://localhost:5000/api/groups", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-    body: JSON.stringify({ name: nameVal })
+  var n = document.getElementById("groupName").value.trim();
+  if (!token || !n) return alert("Login and enter a group name");
+  fetch("https://stealthchat-1.onrender.com/api/groups", {
+    method:"POST",
+    headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body: JSON.stringify({ name: n })
   })
-  .then(function(res) {
-    if (res.ok) {
-      alert("Group created");
-      document.getElementById("groupName").value = "";
-      loadGroups();
-    }
-  })
-  .catch(function(err) { alert("Create error: " + err.message); });
+  .then(function(r){ if(r.ok){ alert("Group created!"); document.getElementById("groupName").value=""; loadGroups(); } })
+  .catch(function(err){ alert("Error: "+err.message); });
 }
 
-// ─── Connect Group ────────────────────────────────────────
-function connectGroup(groupId) {
-  typingUsers = {};
-  isTyping = false;
+// ── Connect Group ───────────────────────────────────────────
+function connectGroup(groupId, groupName) {
+  typingUsers = {}; isTyping = false;
   clearTimeout(typingTimeout);
   hideTypingIndicator();
   updateEncryptionStatus(CryptoEngine.hasKey(groupId));
 
   currentGroup = groupId;
-  loadGroups();
+  currentGroupName = groupName || "Group";
+
+  // Update header
+  document.getElementById("chatHeader").style.display = "flex";
+  document.getElementById("chatHeaderName").textContent = currentGroupName;
+  document.getElementById("chatHeaderSub").textContent = "Real-time · Private";
+  document.getElementById("emptyState").style.display = "none";
+  document.getElementById("messages").style.display = "flex";
+  document.getElementById("inputArea").style.display = "flex";
   document.getElementById("groupInfo").style.display = "block";
+
+  loadGroups();
   loadMessages();
   loadGroupMembers();
 
   if (socket) { socket.off(); socket.disconnect(); socket = null; }
+  socket = io("https://stealthchat-1.onrender.com", { transports:["websocket"] });
 
-  socket = io("http://localhost:5000", { transports: ["websocket"] });
-
-  socket.on("connect", function() {
+  socket.on("connect", function(){
     socket.emit("joinUser", currentUser);
     socket.emit("joinGroup", currentGroup);
     socket.emit("getOnlineUsers");
   });
 
-  socket.on("onlineUsersList", function(data) {
-    onlineUserIds = new Set(data.userIds);
-    loadGroupMembers();
-  });
-  socket.on("userOnline", function(data) {
-    onlineUserIds.add(data.userId);
-    updatePresenceDot(data.userId, true);
-  });
-  socket.on("userOffline", function(data) {
-    onlineUserIds.delete(data.userId);
-    updatePresenceDot(data.userId, false);
-  });
+  socket.on("onlineUsersList", function(d){ onlineUserIds = new Set(d.userIds); loadGroupMembers(); });
+  socket.on("userOnline",  function(d){ onlineUserIds.add(d.userId);    updatePresenceDot(d.userId, true); });
+  socket.on("userOffline", function(d){ onlineUserIds.delete(d.userId); updatePresenceDot(d.userId, false); });
 
-  socket.on("newMessage", function(msg) {
-    if (shouldSeeMessage(msg)) render(msg);
-  });
+  socket.on("newMessage", function(msg){ if(shouldSeeMessage(msg)) render(msg); });
 
-  socket.on("userTyping", function(data) {
-    if (typingUsers[data.userId]) clearTimeout(typingUsers[data.userId].timer);
-    typingUsers[data.userId] = {
-      name: data.name || "Someone",
-      timer: setTimeout(function() {
-        delete typingUsers[data.userId];
-        renderTypingIndicator();
-      }, 3000)
-    };
+  socket.on("userTyping", function(d){
+    if(typingUsers[d.userId]) clearTimeout(typingUsers[d.userId].timer);
+    typingUsers[d.userId] = { name: d.name||"Someone", timer: setTimeout(function(){
+      delete typingUsers[d.userId]; renderTypingIndicator();
+    }, 3000)};
     renderTypingIndicator();
   });
-
-  socket.on("userStopTyping", function(data) {
-    if (typingUsers[data.userId]) {
-      clearTimeout(typingUsers[data.userId].timer);
-      delete typingUsers[data.userId];
-    }
+  socket.on("userStopTyping", function(d){
+    if(typingUsers[d.userId]){ clearTimeout(typingUsers[d.userId].timer); delete typingUsers[d.userId]; }
     renderTypingIndicator();
   });
-
-  socket.on("reactionUpdate", function(data) {
-    var bar = document.getElementById("reactions-" + data.messageId);
-    if (bar) bar.innerHTML = buildReactionHTML(data.reactions, data.messageId);
+  socket.on("reactionUpdate", function(d){
+    var bar = document.getElementById("reactions-"+d.messageId);
+    if(bar) bar.innerHTML = buildReactionHTML(d.reactions, d.messageId);
   });
 }
 
-// ─── Typing ───────────────────────────────────────────────
+// ── Typing ──────────────────────────────────────────────────
 function hideTypingIndicator() {
   var el = document.getElementById("typingIndicator");
-  el.style.display = "none";
-  el.innerHTML = "";
+  el.style.display = "none"; el.innerHTML = "";
 }
-
 function renderTypingIndicator() {
-  var el    = document.getElementById("typingIndicator");
-  var names = Object.keys(typingUsers).map(function(k) { return typingUsers[k].name; });
-  if (names.length === 0) { hideTypingIndicator(); return; }
-  var text = names.length === 1
-    ? names[0] + " is typing..."
-    : names.length === 2
-      ? names[0] + " and " + names[1] + " are typing..."
-      : names.length + " people are typing...";
-  el.style.display    = "flex";
-  el.style.alignItems = "center";
-  el.style.gap        = "8px";
-  el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div><span>' + text + '</span>';
+  var el = document.getElementById("typingIndicator");
+  var names = Object.keys(typingUsers).map(function(k){ return typingUsers[k].name; });
+  if(!names.length){ hideTypingIndicator(); return; }
+  var txt = names.length===1 ? names[0]+" is typing..." : names.length+" people are typing...";
+  el.style.display = "flex"; el.style.alignItems = "center"; el.style.gap = "8px";
+  el.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div><span>'+txt+'</span>';
 }
-
 function handleTyping() {
-  if (!socket || !socket.connected || !currentGroup || !currentUser) return;
-  if (!isTyping) {
-    isTyping = true;
-    socket.emit("typing", { groupId: currentGroup, userId: currentUser, name: currentUserName });
-  }
+  if(!socket||!socket.connected||!currentGroup||!currentUser) return;
+  if(!isTyping){ isTyping=true; socket.emit("typing",{groupId:currentGroup,userId:currentUser,name:currentUserName}); }
   clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(function() {
-    isTyping = false;
-    socket.emit("stopTyping", { groupId: currentGroup, userId: currentUser });
+  typingTimeout = setTimeout(function(){
+    isTyping=false; socket.emit("stopTyping",{groupId:currentGroup,userId:currentUser});
   }, 1500);
 }
-
-document.getElementById("msg").addEventListener("keydown", function(e) {
-  if (e.key === "Enter") { sendMessage(); } else { handleTyping(); }
+document.getElementById("msg").addEventListener("keydown", function(e){
+  if(e.key==="Enter"){ sendMessage(); } else { handleTyping(); }
 });
 
-// ─── Presence ─────────────────────────────────────────────
+// ── Presence ────────────────────────────────────────────────
 function updatePresenceDot(userId, isOnline) {
-  var dot = document.getElementById("dot-" + userId);
-  if (dot) {
-    if (isOnline) { dot.classList.add("online"); dot.title = "Online"; }
-    else          { dot.classList.remove("online"); dot.title = "Offline"; }
-  }
-  var msgDot = document.getElementById("msgdot-" + userId);
-  if (msgDot) {
-    if (isOnline) msgDot.classList.add("online");
-    else          msgDot.classList.remove("online");
-  }
+  ["dot-","msgdot-"].forEach(function(prefix){
+    var d = document.getElementById(prefix+userId);
+    if(d){ if(isOnline) d.classList.add("online"); else d.classList.remove("online"); }
+  });
 }
 
-// ─── Members ──────────────────────────────────────────────
+// ── Members ─────────────────────────────────────────────────
 function loadGroupMembers() {
-  if (!currentGroup || !token) return;
-  fetch("http://localhost:5000/api/groups/" + currentGroup, {
-    headers: { "Authorization": "Bearer " + token }
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(group) {
-    var membersDiv = document.getElementById("groupMembers");
-    membersDiv.innerHTML = "";
-    (group.members || []).forEach(function(member) {
-      var id      = (member._id || member).toString();
-      var name    = member.name || ("..." + id.slice(-8));
+  if(!currentGroup||!token) return;
+  fetch("https://stealthchat-1.onrender.com/api/groups/"+currentGroup, { headers:{"Authorization":"Bearer "+token} })
+  .then(function(r){ return r.json(); })
+  .then(function(group){
+    var md = document.getElementById("groupMembers");
+    md.innerHTML = "";
+    (group.members||[]).forEach(function(m){
+      var id = (m._id||m).toString();
+      var name = m.name||("..."+id.slice(-8));
       var isOnline = onlineUserIds.has(id);
-      var isMe    = (id === currentUser);
       var wrapper = document.createElement("div");
       wrapper.className = "member-wrapper";
       var dot = document.createElement("span");
-      dot.className = "presence-dot" + (isOnline ? " online" : "");
-      dot.id = "dot-" + id;
-      dot.title = isOnline ? "Online" : "Offline";
+      dot.className = "presence-dot"+(isOnline?" online":"");
+      dot.id = "dot-"+id; dot.title = isOnline?"Online":"Offline";
       var tag = document.createElement("span");
       tag.className = "member-tag group-tag";
-      tag.textContent = name + (isMe ? " (you)" : "");
-      wrapper.appendChild(dot);
-      wrapper.appendChild(tag);
-      membersDiv.appendChild(wrapper);
+      tag.textContent = name + (id===currentUser?" (you)":"");
+      wrapper.appendChild(dot); wrapper.appendChild(tag);
+      md.appendChild(wrapper);
     });
-
-    var visibleDiv = document.getElementById("visibleMembers");
-    if (group.visibleMembers && group.visibleMembers.length > 0) {
-      var tags = group.visibleMembers.map(function(member) {
-        var id   = (member._id || member).toString();
-        var name = member.name || ("..." + id.slice(-8));
-        return '<span class="member-tag visible-tag">' + name + '</span>';
-      }).join("");
-      visibleDiv.innerHTML = '<div style="color:#3b82f6;font-weight:bold;margin-bottom:6px;">PRIVATE: ' +
-        group.visibleMembers.length + ' members only</div>' + tags;
+    var vd = document.getElementById("visibleMembers");
+    if(group.visibleMembers&&group.visibleMembers.length>0){
+      var tags = group.visibleMembers.map(function(m){
+        var id=(m._id||m).toString(); var name=m.name||("..."+id.slice(-8));
+        return '<span class="member-tag visible-tag">'+name+'</span>';
+      }).join(" ");
+      vd.innerHTML = '<div style="color:#6366f1;font-weight:600;font-size:11px;margin-bottom:5px;">PRIVATE — '+group.visibleMembers.length+' members</div>'+tags;
     } else {
-      visibleDiv.innerHTML = '<span style="color:#10b981;">PUBLIC: Everyone in group</span>';
+      vd.innerHTML = '<span style="color:#34d399;font-size:12px;">👁 Public — everyone sees messages</span>';
     }
   })
-  .catch(function(err) { console.error("Load members error:", err); });
+  .catch(function(err){ console.error(err); });
 }
 
 function addMemberToGroup() {
   var val = document.getElementById("newMember").value.trim();
-  if (!currentGroup || !val) return alert("Select group and enter member ID");
-  fetch("http://localhost:5000/api/groups/add-member", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-    body: JSON.stringify({ groupId: currentGroup, userId: val })
-  })
-  .then(function() {
-    alert("Member added");
-    document.getElementById("newMember").value = "";
-    loadGroupMembers();
-  })
-  .catch(function(err) { alert("Error: " + err.message); });
+  if(!currentGroup||!val) return alert("Select group and enter member ID");
+  fetch("https://stealthchat-1.onrender.com/api/groups/add-member",{
+    method:"PUT", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body: JSON.stringify({groupId:currentGroup,userId:val})
+  }).then(function(){ alert("Member added!"); document.getElementById("newMember").value=""; loadGroupMembers(); })
+  .catch(function(err){ alert("Error: "+err.message); });
 }
 
-// ─── Privacy Modal ────────────────────────────────────────
+// ── Privacy Modal ───────────────────────────────────────────
 function toggleMemberVisibility() {
-  if (!currentGroup) return alert("Select a group first");
+  if(!currentGroup) return alert("Select a group first");
   closePrivacyModal();
-  fetch("http://localhost:5000/api/groups/" + currentGroup, {
-    headers: { "Authorization": "Bearer " + token }
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(group) {
+  fetch("https://stealthchat-1.onrender.com/api/groups/"+currentGroup,{headers:{"Authorization":"Bearer "+token}})
+  .then(function(r){ return r.json(); })
+  .then(function(group){
     privacySelections = {};
-    (group.visibleMembers || []).forEach(function(m) {
-      privacySelections[(m._id || m).toString()] = true;
-    });
+    (group.visibleMembers||[]).forEach(function(m){ privacySelections[(m._id||m).toString()]=true; });
     var overlay = document.createElement("div");
-    overlay.id = "privacyModal";
-    overlay.style.cssText = "position:fixed;top:0;left:0;width:100vw;height:100vh;" +
-      "background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;z-index:99999;";
+    overlay.className = "modal-overlay"; overlay.id = "privacyModal";
     var box = document.createElement("div");
-    box.style.cssText = "background:#1e293b;border-radius:16px;padding:28px;width:340px;max-height:80vh;overflow-y:auto;color:#f1f5f9;";
-    var html = (group.members || []).map(function(member) {
-      var id      = (member._id || member).toString();
-      var name    = member.name || ("..." + id.slice(-8));
-      var isMe    = (id === currentUser);
-      var checked = privacySelections[id] ? "checked" : "";
-      return '<label style="display:flex;align-items:center;gap:12px;padding:10px 12px;background:#334155;border-radius:8px;margin:6px 0;cursor:pointer;">' +
-        '<input type="checkbox" value="' + id + '" ' + checked +
-        ' onchange="togglePrivacySelection(this.value,this.checked)"' +
-        ' style="width:18px;height:18px;cursor:pointer;accent-color:#10b981;">' +
-        '<span style="font-size:14px;">' + name + (isMe ? ' <span style="color:#10b981;font-size:12px;">(you)</span>' : '') + '</span></label>';
+    box.className = "modal-box";
+    var html = (group.members||[]).map(function(m){
+      var id=(m._id||m).toString(); var name=m.name||("..."+id.slice(-8));
+      var isMe=(id===currentUser); var checked=privacySelections[id]?"checked":"";
+      return '<label class="check-label">'+
+        '<input type="checkbox" value="'+id+'" '+checked+' onchange="togglePrivacySelection(this.value,this.checked)">'+
+        '<span style="font-size:13px;">'+name+(isMe?' <span style="color:#34d399;font-size:11px;">(you)</span>':'')+' </span></label>';
     }).join("");
-    box.innerHTML = '<h3 style="margin:0 0 8px 0;font-size:18px;">Message Privacy</h3>' +
-      '<p style="color:#94a3b8;font-size:13px;margin:0 0 16px 0;">Check who sees messages. Leave all unchecked = everyone sees.</p>' +
-      '<div>' + html + '</div>' +
-      '<div style="display:flex;gap:10px;margin-top:20px;">' +
-      '<button onclick="savePrivacySelection()" style="flex:1;background:#10b981;color:white;padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">Save</button>' +
-      '<button onclick="closePrivacyModal()" style="flex:1;background:#ef4444;color:white;padding:12px;font-size:15px;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">Cancel</button></div>';
-    overlay.addEventListener("click", function(e) { if (e.target === overlay) closePrivacyModal(); });
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
+    box.innerHTML = '<h3 style="margin-bottom:6px;">🔒 Message Privacy</h3>'+
+      '<p>Checked members see messages. Leave all unchecked = everyone.</p>'+
+      '<div>'+html+'</div>'+
+      '<div class="btn-row" style="margin-top:18px;">'+
+      '<button class="btn btn-success" onclick="savePrivacySelection()">Save</button>'+
+      '<button class="btn btn-danger" onclick="closePrivacyModal()">Cancel</button></div>';
+    overlay.addEventListener("click", function(e){ if(e.target===overlay) closePrivacyModal(); });
+    overlay.appendChild(box); document.body.appendChild(overlay);
   });
 }
-
-function closePrivacyModal() {
-  var m = document.getElementById("privacyModal");
-  if (m) m.remove();
-}
-
-function togglePrivacySelection(id, checked) {
-  if (checked) privacySelections[id] = true;
-  else delete privacySelections[id];
-}
-
-function savePrivacySelection() {
+function closePrivacyModal(){ var m=document.getElementById("privacyModal"); if(m) m.remove(); }
+function togglePrivacySelection(id,checked){ if(checked) privacySelections[id]=true; else delete privacySelections[id]; }
+function savePrivacySelection(){
   var ids = Object.keys(privacySelections);
-  fetch("http://localhost:5000/api/groups/" + currentGroup + "/visibility", {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-    body: JSON.stringify({ visibleMembers: ids })
-  })
-  .then(function(res) {
-    if (!res.ok) return alert("Failed to save");
-    alert(ids.length === 0 ? "Public - everyone sees messages" : "Private - only " + ids.length + " member(s) see messages");
-    closePrivacyModal();
-    loadGroupMembers();
-  })
-  .catch(function(err) { alert("Error: " + err.message); });
+  fetch("https://stealthchat-1.onrender.com/api/groups/"+currentGroup+"/visibility",{
+    method:"PUT", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body: JSON.stringify({visibleMembers:ids})
+  }).then(function(r){
+    if(!r.ok) return alert("Failed");
+    alert(ids.length===0?"Public — everyone sees messages":"Private — "+ids.length+" member(s) only");
+    closePrivacyModal(); loadGroupMembers();
+  }).catch(function(err){ alert("Error: "+err.message); });
 }
 
-// ─── Scheduled Messages ───────────────────────────────────
+// ── Scheduled Messages ──────────────────────────────────────
 function openScheduleModal() {
   var text = document.getElementById("msg").value.trim();
-  if (!currentGroup) return alert("Select a group first");
-  if (!text) return alert("Type a message first");
+  if(!currentGroup) return alert("Select a group first");
+  if(!text) return alert("Type a message first");
   pendingScheduleText = text;
-  var preview = text.length > 40 ? text.slice(0, 40) + "..." : text;
-  document.getElementById("schedulePreview").textContent = preview;
-  var def = new Date(Date.now() + 3600000);
-  var iso = new Date(def.getTime() - def.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  var preview = text.length>50 ? text.slice(0,50)+"..." : text;
+  document.getElementById("schedulePreviewBox").textContent = '"' + preview + '"';
+  var def = new Date(Date.now()+3600000);
+  var iso = new Date(def.getTime()-def.getTimezoneOffset()*60000).toISOString().slice(0,16);
   document.getElementById("scheduleDateTime").value = iso;
   document.getElementById("scheduleModal").style.display = "block";
 }
-
-function closeScheduleModal() {
-  document.getElementById("scheduleModal").style.display = "none";
-  pendingScheduleText = "";
-}
-
-function confirmSchedule() {
-  var dateVal = document.getElementById("scheduleDateTime").value;
-  if (!dateVal) return alert("Pick a date and time");
-  var revealAt = new Date(dateVal);
-  if (revealAt <= new Date()) return alert("Pick a future time");
-  fetch("http://localhost:5000/api/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-    body: JSON.stringify({ groupId: currentGroup, text: pendingScheduleText, revealAt: revealAt.toISOString() })
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    if (data.scheduled) {
-      alert("Scheduled for " + revealAt.toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }));
-      document.getElementById("msg").value = "";
-      closeScheduleModal();
+function closeScheduleModal(){ document.getElementById("scheduleModal").style.display="none"; pendingScheduleText=""; }
+function confirmSchedule(){
+  var dv = document.getElementById("scheduleDateTime").value;
+  if(!dv) return alert("Pick a time");
+  var ra = new Date(dv);
+  if(ra<=new Date()) return alert("Pick a future time");
+  fetch("https://stealthchat-1.onrender.com/api/messages",{
+    method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body: JSON.stringify({groupId:currentGroup,text:pendingScheduleText,revealAt:ra.toISOString()})
+  }).then(function(r){ return r.json(); })
+  .then(function(d){
+    if(d.scheduled){
+      alert("Scheduled for "+ra.toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}));
+      document.getElementById("msg").value=""; closeScheduleModal();
     }
-  })
-  .catch(function(err) { alert("Schedule error: " + err.message); });
+  }).catch(function(err){ alert("Error: "+err.message); });
 }
-
-function toggleScheduledPanel() {
-  var p = document.getElementById("scheduledPanel");
-  if (p.style.display === "block") { p.style.display = "none"; }
-  else { p.style.display = "block"; loadScheduledMessages(); }
+function toggleScheduledPanel(){
+  var p=document.getElementById("scheduledPanel");
+  if(p.style.display==="block"){ p.style.display="none"; } else { p.style.display="block"; loadScheduledMessages(); }
 }
-
-function loadScheduledMessages() {
-  if (!currentGroup || !token) return;
-  fetch("http://localhost:5000/api/messages/scheduled/" + currentGroup, {
-    headers: { "Authorization": "Bearer " + token }
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(msgs) {
+function loadScheduledMessages(){
+  if(!currentGroup||!token) return;
+  fetch("https://stealthchat-1.onrender.com/api/messages/scheduled/"+currentGroup,{headers:{"Authorization":"Bearer "+token}})
+  .then(function(r){ return r.json(); })
+  .then(function(msgs){
     var list = document.getElementById("scheduledList");
-    if (!msgs.length) {
-      list.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;">No scheduled messages</p>';
-      return;
-    }
-    list.innerHTML = "";
-    msgs.forEach(function(msg) {
-      var t = new Date(msg.revealAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-      var item = document.createElement("div");
-      item.className = "scheduled-item";
-      item.innerHTML = '<div class="sched-text">' + msg.text + '</div>' +
-        '<div class="sched-time">Sends at: ' + t + '</div>' +
-        '<button class="sched-cancel" onclick="cancelScheduled(\'' + msg._id + '\')">Cancel</button>';
+    if(!msgs.length){ list.innerHTML='<p style="color:#64748b;font-size:12px;text-align:center;padding:12px;">No scheduled messages</p>'; return; }
+    list.innerHTML="";
+    msgs.forEach(function(m){
+      var t=new Date(m.revealAt).toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+      var item=document.createElement("div"); item.className="scheduled-item";
+      item.innerHTML='<div class="sched-text">'+m.text+'</div>'+
+        '<div class="sched-time">Sends at: '+t+'</div>'+
+        '<button class="sched-cancel-btn" onclick="cancelScheduled(\''+m._id+'\')">Cancel</button>';
       list.appendChild(item);
     });
-  })
-  .catch(function(err) { console.error("Scheduled error:", err); });
+  }).catch(function(err){ console.error(err); });
+}
+function cancelScheduled(id){
+  if(!confirm("Cancel this scheduled message?")) return;
+  fetch("https://stealthchat-1.onrender.com/api/messages/scheduled/"+id,{method:"DELETE",headers:{"Authorization":"Bearer "+token}})
+  .then(function(r){ if(r.ok){ alert("Cancelled"); loadScheduledMessages(); } })
+  .catch(function(err){ alert("Error: "+err.message); });
 }
 
-function cancelScheduled(id) {
-  if (!confirm("Cancel this scheduled message?")) return;
-  fetch("http://localhost:5000/api/messages/scheduled/" + id, {
-    method: "DELETE", headers: { "Authorization": "Bearer " + token }
-  })
-  .then(function(res) { if (res.ok) { alert("Cancelled"); loadScheduledMessages(); } })
-  .catch(function(err) { alert("Error: " + err.message); });
+// ── Messages ────────────────────────────────────────────────
+function shouldSeeMessage(msg){
+  if(!msg.visibleTo||msg.visibleTo.length===0) return true;
+  return msg.visibleTo.some(function(id){ return (id&&id.toString())===currentUser; });
 }
-
-// ─── Messages ─────────────────────────────────────────────
-function shouldSeeMessage(msg) {
-  if (!msg.visibleTo || msg.visibleTo.length === 0) return true;
-  return msg.visibleTo.some(function(id) { return (id && id.toString()) === currentUser; });
+function loadMessages(){
+  if(!currentGroup||!token) return;
+  fetch("https://stealthchat-1.onrender.com/api/messages/"+currentGroup,{headers:{"Authorization":"Bearer "+token}})
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    var md=document.getElementById("messages");
+    md.innerHTML="";
+    if(Array.isArray(data)) data.filter(shouldSeeMessage).forEach(function(m){ render(m); });
+    md.scrollTop=md.scrollHeight;
+  }).catch(function(err){ console.error(err); });
 }
-
-function loadMessages() {
-  if (!currentGroup || !token) return;
-  fetch("http://localhost:5000/api/messages/" + currentGroup, {
-    headers: { "Authorization": "Bearer " + token }
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    var div = document.getElementById("messages");
-    div.innerHTML = "";
-    if (Array.isArray(data)) data.filter(shouldSeeMessage).forEach(function(msg) { render(msg); });
-    div.scrollTop = div.scrollHeight;
-  })
-  .catch(function(err) { console.error("Load messages error:", err); });
-}
-
-function sendMessage() {
-  var msgInput = document.getElementById("msg");
-  if (!currentGroup || !msgInput.value.trim()) return;
-  isTyping = false;
-  clearTimeout(typingTimeout);
-  if (socket && socket.connected) socket.emit("stopTyping", { groupId: currentGroup, userId: currentUser });
-
-  var plaintext = msgInput.value;
-  msgInput.value = "";
-
-  var sendIt = function(text, isEncrypted) {
-    fetch("http://localhost:5000/api/messages", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-      body: JSON.stringify({ groupId: currentGroup, text: text, isEncrypted: isEncrypted })
-    }).catch(function(err) { console.error("Send error:", err); });
+function sendMessage(){
+  var inp = document.getElementById("msg");
+  if(!currentGroup||!inp.value.trim()) return;
+  isTyping=false; clearTimeout(typingTimeout);
+  if(socket&&socket.connected) socket.emit("stopTyping",{groupId:currentGroup,userId:currentUser});
+  var text = inp.value; inp.value="";
+  var doSend = function(t, enc){
+    fetch("https://stealthchat-1.onrender.com/api/messages",{
+      method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+      body: JSON.stringify({groupId:currentGroup,text:t,isEncrypted:enc})
+    }).catch(function(err){ console.error(err); });
   };
-
-  if (CryptoEngine.hasKey(currentGroup)) {
-    CryptoEngine.encrypt(currentGroup, plaintext).then(function(encrypted) {
-      sendIt(encrypted, true);
-    }).catch(function() {
-      sendIt(plaintext, false);
-    });
-  } else {
-    sendIt(plaintext, false);
-  }
+  if(CryptoEngine.hasKey(currentGroup)){
+    CryptoEngine.encrypt(currentGroup,text).then(function(ct){ doSend(ct,true); }).catch(function(){ doSend(text,false); });
+  } else { doSend(text,false); }
 }
 
-// ─── Render ───────────────────────────────────────────────
-function render(msg) {
-  var existing = document.getElementById("msg-" + msg._id);
-  if (existing) existing.remove();
+// ── Render ──────────────────────────────────────────────────
+function render(msg){
+  var ex=document.getElementById("msg-"+msg._id); if(ex) ex.remove();
+  var div=document.createElement("div"); div.id="msg-"+msg._id;
+  var senderId=(msg.senderId&&msg.senderId._id)?msg.senderId._id:msg.senderId;
+  var me=(senderId&&senderId.toString())===currentUser;
+  div.className="message "+(me?"sent":"received");
 
-  var div = document.createElement("div");
-  div.id  = "msg-" + msg._id;
+  var time=new Date(msg.createdAt).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});
+  var senderName=(msg.senderId&&msg.senderId.name)?msg.senderId.name:"";
+  var visibility=(msg.visibleTo&&msg.visibleTo.length>0)?("🔒 "+msg.visibleTo.length+" only"):"👁 Everyone";
 
-  var senderId = (msg.senderId && msg.senderId._id) ? msg.senderId._id : msg.senderId;
-  var me       = (senderId && senderId.toString()) === currentUser;
-  div.className = "message " + (me ? "sent" : "received");
+  var body=document.createElement("div"); body.className="msg-body";
 
-  var time       = new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  var senderName = (msg.senderId && msg.senderId.name) ? msg.senderId.name : "";
-  var visibility = (msg.visibleTo && msg.visibleTo.length > 0) ? ("🔒 " + msg.visibleTo.length + " only") : "👁 Everyone";
-
-  var msgBody = document.createElement("div");
-  msgBody.className = "msg-body";
-
-  // ✅ Sender name row with presence dot (only one declaration)
-  if (!me && senderName) {
-    var nameRow   = document.createElement("div");
-    nameRow.style.cssText = "display:flex;align-items:center;gap:5px;margin-bottom:4px;";
-    var senderDot = document.createElement("span");
-    senderDot.className = "presence-dot" + (onlineUserIds.has(senderId.toString()) ? " online" : "");
-    senderDot.id = "msgdot-" + senderId;
-    var nameLabel = document.createElement("small");
-    nameLabel.style.cssText = "opacity:0.6;";
-    nameLabel.textContent = senderName;
-    nameRow.appendChild(senderDot);
-    nameRow.appendChild(nameLabel);
-    msgBody.appendChild(nameRow);
+  // Sender row with presence dot
+  if(!me&&senderName){
+    var nameRow=document.createElement("div"); nameRow.className="msg-sender";
+    var dot=document.createElement("span");
+    dot.className="presence-dot"+(onlineUserIds.has(senderId.toString())?" online":"");
+    dot.id="msgdot-"+senderId;
+    var lbl=document.createElement("span"); lbl.textContent=senderName;
+    nameRow.appendChild(dot); nameRow.appendChild(lbl);
+    body.appendChild(nameRow);
   }
 
-  // ✅ Text — decrypt if needed
-  var textEl = document.createElement("span");
-  textEl.textContent = "...";
-  msgBody.appendChild(textEl);
+  // Text
+  var textEl=document.createElement("span"); textEl.className="msg-text";
+  textEl.textContent="..."; body.appendChild(textEl);
 
-  if (msg.isEncrypted && CryptoEngine.hasKey(currentGroup)) {
-    CryptoEngine.decrypt(currentGroup, msg.text).then(function(plain) {
-      textEl.textContent = plain;
-    });
-  } else if (msg.isEncrypted) {
-    textEl.textContent = "🔐 [encrypted — import the group key to read]";
-    textEl.style.color = "#94a3b8";
-    textEl.style.fontStyle = "italic";
-  } else {
-    textEl.textContent = msg.text;
-  }
+  if(msg.isEncrypted&&CryptoEngine.hasKey(currentGroup)){
+    CryptoEngine.decrypt(currentGroup,msg.text).then(function(p){ textEl.textContent=p; });
+  } else if(msg.isEncrypted){
+    textEl.textContent="🔐 Encrypted — import key to read";
+    textEl.style.color="#64748b"; textEl.style.fontStyle="italic";
+  } else { textEl.textContent=msg.text; }
 
-  var metaEl = document.createElement("small");
-  metaEl.style.cssText = "opacity:0.65;display:block;margin-top:4px;";
-  metaEl.textContent = time + " · " + visibility;
-  msgBody.appendChild(metaEl);
+  // Meta
+  var meta=document.createElement("div"); meta.className="msg-meta";
+  meta.textContent=time+" · "+visibility; body.appendChild(meta);
 
-  if (msg.type === "timed") {
-    var badge = document.createElement("span");
-    badge.className = "scheduled-badge";
-    badge.textContent = "⏰ Scheduled";
-    msgBody.appendChild(badge);
-  }
+  // Scheduled badge
+  if(msg.type==="timed"){ var b=document.createElement("span"); b.className="scheduled-badge"; b.textContent="⏰ Scheduled"; body.appendChild(b); }
 
-  var picker = document.createElement("div");
-  picker.className = "emoji-picker";
-  picker.id = "picker-" + msg._id;
-  EMOJI_LIST.forEach(function(e) {
-    var btn = document.createElement("span");
-    btn.className = "emoji-btn";
-    btn.textContent = e;
-    btn.onclick = function() { sendReaction(msg._id, e); };
-    picker.appendChild(btn);
+  // Emoji picker
+  var picker=document.createElement("div"); picker.className="emoji-picker"; picker.id="picker-"+msg._id;
+  EMOJI_LIST.forEach(function(e){
+    var btn=document.createElement("span"); btn.className="emoji-btn"; btn.textContent=e;
+    btn.onclick=function(){ sendReaction(msg._id,e); }; picker.appendChild(btn);
   });
 
-  var reactionBar = document.createElement("div");
-  reactionBar.className = "reaction-bar";
-  reactionBar.id = "reactions-" + msg._id;
-  reactionBar.innerHTML = buildReactionHTML(msg.reactions || [], msg._id);
+  // Reactions
+  var rBar=document.createElement("div"); rBar.className="reaction-bar"; rBar.id="reactions-"+msg._id;
+  rBar.innerHTML=buildReactionHTML(msg.reactions||[],msg._id);
 
-  div.appendChild(msgBody);
-  div.appendChild(reactionBar);
-  div.appendChild(picker);
+  div.appendChild(body); div.appendChild(rBar); div.appendChild(picker);
 
-  div.addEventListener("mouseenter", function() { picker.style.opacity = "1"; picker.style.pointerEvents = "auto"; });
-  div.addEventListener("mouseleave", function() { picker.style.opacity = "0"; picker.style.pointerEvents = "none"; });
+  div.addEventListener("mouseenter",function(){ picker.style.opacity="1"; picker.style.pointerEvents="auto"; });
+  div.addEventListener("mouseleave",function(){ picker.style.opacity="0"; picker.style.pointerEvents="none"; });
 
-  var messagesDiv = document.getElementById("messages");
-  messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  var md=document.getElementById("messages");
+  md.appendChild(div); md.scrollTop=md.scrollHeight;
 }
 
-// ─── Reactions ────────────────────────────────────────────
-function buildReactionHTML(reactions, msgId) {
-  if (!reactions || reactions.length === 0) return "";
-  var grouped = {};
-  reactions.forEach(function(r) {
-    if (!grouped[r.emoji]) grouped[r.emoji] = { count: 0, users: [] };
-    grouped[r.emoji].count++;
-    grouped[r.emoji].users.push(r.userId);
-  });
-  return Object.keys(grouped).map(function(emoji) {
-    var data   = grouped[emoji];
-    var isMine = data.users.some(function(id) { return id && id.toString() === currentUser; });
-    var label  = data.count + " reaction" + (data.count > 1 ? "s" : "");
-    return '<span class="reaction-chip ' + (isMine ? "mine" : "") + '"' +
-      ' onclick="sendReaction(\'' + msgId + '\', \'' + emoji + '\')"' +
-      ' title="' + label + '">' + emoji + ' ' + data.count + '</span>';
+// ── Reactions ────────────────────────────────────────────────
+function buildReactionHTML(reactions,msgId){
+  if(!reactions||!reactions.length) return "";
+  var g={};
+  reactions.forEach(function(r){ if(!g[r.emoji]) g[r.emoji]={count:0,users:[]}; g[r.emoji].count++; g[r.emoji].users.push(r.userId); });
+  return Object.keys(g).map(function(e){
+    var d=g[e]; var mine=d.users.some(function(id){ return id&&id.toString()===currentUser; });
+    return '<span class="reaction-chip'+(mine?" mine":"")+'" onclick="sendReaction(\''+msgId+'\',\''+e+'\')" title="'+d.count+' reactions">'+e+' '+d.count+'</span>';
   }).join("");
 }
-
-function sendReaction(messageId, emoji) {
-  if (!token) return;
-  fetch("http://localhost:5000/api/messages/" + messageId + "/react", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
-    body: JSON.stringify({ emoji: emoji })
-  }).catch(function(err) { console.error("Reaction error:", err); });
+function sendReaction(msgId,emoji){
+  if(!token) return;
+  fetch("https://stealthchat-1.onrender.com/api/messages/"+msgId+"/react",{
+    method:"POST", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    body: JSON.stringify({emoji:emoji})
+  }).catch(function(err){ console.error(err); });
 }
 </script>
 </body>
