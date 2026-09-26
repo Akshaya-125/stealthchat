@@ -461,11 +461,14 @@ body {
     <div class="sidebar-section">
       <h4>Message Privacy</h4>
       <div id="visibleMembers" class="info-box" style="min-height:36px;font-size:12px;"></div>
-      <input class="auth-input" id="newMember" placeholder="Add member by ID" style="margin-top:8px;">
-      <div class="btn-row" style="margin-top:4px;">
-        <button class="btn btn-warning" onclick="addMemberToGroup()" style="font-size:12px;">+ Add</button>
-        <button class="btn btn-teal" onclick="toggleMemberVisibility()" style="font-size:12px;">🔒 Privacy</button>
-      </div>
+      
+<div id="addMemberSection">
+  <input class="auth-input" id="newMember" placeholder="Add member by ID" style="margin-top:8px;">
+  <div class="btn-row" style="margin-top:4px;">
+    <button class="btn btn-warning" onclick="addMemberToGroup()" style="font-size:12px;">+ Add</button>
+    <button class="btn btn-teal" onclick="toggleMemberVisibility()" style="font-size:12px;">🔒 Privacy</button>
+  </div>
+</div>
     </div>
 
     <div class="sidebar-section">
@@ -825,41 +828,97 @@ function updatePresenceDot(userId, isOnline) {
 
 // ── Members ─────────────────────────────────────────────────
 function loadGroupMembers() {
-  if(!currentGroup||!token) return;
-  fetch("https://stealthchat-1.onrender.com/api/groups/"+currentGroup, { headers:{"Authorization":"Bearer "+token} })
-  .then(function(r){ return r.json(); })
-  .then(function(group){
+  if (!currentGroup || !token) return;
+  fetch("https://stealthchat-1.onrender.com/api/groups/" + currentGroup, {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(group) {
+    // Check if current user is admin
+    var amIAdmin = (group.admins || []).some(function(id) {
+      return (id._id || id).toString() === currentUser;
+    });
+
     var md = document.getElementById("groupMembers");
     md.innerHTML = "";
-    (group.members||[]).forEach(function(m){
-      var id = (m._id||m).toString();
-      var name = m.name||("..."+id.slice(-8));
+
+    (group.members || []).forEach(function(member) {
+      var id = (member._id || member).toString();
+      var name = member.name || ("..." + id.slice(-8));
       var isOnline = onlineUserIds.has(id);
+      var isMe = (id === currentUser);
+      var isAdmin = (group.admins || []).some(function(a) {
+        return (a._id || a).toString() === id;
+      });
+
       var wrapper = document.createElement("div");
-      wrapper.className = "member-wrapper";
+      wrapper.style.cssText = "display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.05);";
+
+      // Presence dot
       var dot = document.createElement("span");
-      dot.className = "presence-dot"+(isOnline?" online":"");
-      dot.id = "dot-"+id; dot.title = isOnline?"Online":"Offline";
-      var tag = document.createElement("span");
-      tag.className = "member-tag group-tag";
-      tag.textContent = name + (id===currentUser?" (you)":"");
-      wrapper.appendChild(dot); wrapper.appendChild(tag);
+      dot.className = "presence-dot" + (isOnline ? " online" : "");
+      dot.id = "dot-" + id;
+
+      // Name
+      var nameSpan = document.createElement("span");
+      nameSpan.style.cssText = "flex:1;font-size:12px;color:#e2e8f0;";
+      nameSpan.textContent = name + (isMe ? " (you)" : "");
+
+      // Admin badge
+      if (isAdmin) {
+        var badge = document.createElement("span");
+        badge.style.cssText = "font-size:10px;padding:2px 6px;background:rgba(124,58,237,0.2);color:#a78bfa;border-radius:8px;border:1px solid rgba(124,58,237,0.3);";
+        badge.textContent = "Admin";
+        wrapper.appendChild(dot);
+        wrapper.appendChild(nameSpan);
+        wrapper.appendChild(badge);
+      } else {
+        wrapper.appendChild(dot);
+        wrapper.appendChild(nameSpan);
+      }
+
+      // Admin actions — only show to admins, not for themselves
+      if (amIAdmin && !isMe && !isAdmin) {
+        var makeAdminBtn = document.createElement("button");
+        makeAdminBtn.textContent = "⬆";
+        makeAdminBtn.title = "Make Admin";
+        makeAdminBtn.style.cssText = "background:rgba(99,102,241,0.2);color:#818cf8;border:1px solid rgba(99,102,241,0.3);border-radius:6px;padding:2px 6px;cursor:pointer;font-size:11px;";
+        makeAdminBtn.onclick = function() { makeAdmin(groupId, id, name); };
+
+        var removeBtn = document.createElement("button");
+        removeBtn.textContent = "✕";
+        removeBtn.title = "Remove Member";
+        removeBtn.style.cssText = "background:rgba(220,38,38,0.15);color:#f87171;border:1px solid rgba(220,38,38,0.2);border-radius:6px;padding:2px 6px;cursor:pointer;font-size:11px;";
+        removeBtn.onclick = function() { removeMember(id, name); };
+
+        wrapper.appendChild(makeAdminBtn);
+        wrapper.appendChild(removeBtn);
+      }
+
       md.appendChild(wrapper);
     });
+
+    // Show/hide add member section based on admin status
+    var addSection = document.getElementById("addMemberSection");
+    if (addSection) {
+      addSection.style.display = amIAdmin ? "block" : "none";
+    }
+
+    // Visible members
     var vd = document.getElementById("visibleMembers");
-    if(group.visibleMembers&&group.visibleMembers.length>0){
-      var tags = group.visibleMembers.map(function(m){
-        var id=(m._id||m).toString(); var name=m.name||("..."+id.slice(-8));
-        return '<span class="member-tag visible-tag">'+name+'</span>';
+    if (group.visibleMembers && group.visibleMembers.length > 0) {
+      var tags = group.visibleMembers.map(function(m) {
+        var id = (m._id || m).toString();
+        var name = m.name || ("..." + id.slice(-8));
+        return '<span class="member-tag visible-tag">' + name + '</span>';
       }).join(" ");
-      vd.innerHTML = '<div style="color:#6366f1;font-weight:600;font-size:11px;margin-bottom:5px;">PRIVATE — '+group.visibleMembers.length+' members</div>'+tags;
+      vd.innerHTML = '<div style="color:#6366f1;font-weight:600;font-size:11px;margin-bottom:5px;">PRIVATE — ' + group.visibleMembers.length + ' members</div>' + tags;
     } else {
       vd.innerHTML = '<span style="color:#34d399;font-size:12px;">👁 Public — everyone sees messages</span>';
     }
   })
-  .catch(function(err){ console.error(err); });
+  .catch(function(err) { console.error(err); });
 }
-
 function addMemberToGroup() {
   var val = document.getElementById("newMember").value.trim();
   if(!currentGroup||!val) return alert("Select group and enter member ID");
@@ -868,6 +927,35 @@ function addMemberToGroup() {
     body: JSON.stringify({groupId:currentGroup,userId:val})
   }).then(function(){ alert("Member added!"); document.getElementById("newMember").value=""; loadGroupMembers(); })
   .catch(function(err){ alert("Error: "+err.message); });
+}
+function makeAdmin(groupId, userId, name) {
+  if (!confirm("Make " + name + " an admin?")) return;
+  fetch("https://stealthchat-1.onrender.com/api/groups/make-admin", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ groupId: currentGroup, userId: userId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    alert(name + " is now an admin");
+    loadGroupMembers();
+  })
+  .catch(function(err) { alert("Error: " + err.message); });
+}
+
+function removeMember(userId, name) {
+  if (!confirm("Remove " + name + " from group?")) return;
+  fetch("https://stealthchat-1.onrender.com/api/groups/remove-member", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ groupId: currentGroup, userId: userId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function() {
+    alert(name + " removed from group");
+    loadGroupMembers();
+  })
+  .catch(function(err) { alert("Error: " + err.message); });
 }
 
 // ── Privacy Modal ───────────────────────────────────────────

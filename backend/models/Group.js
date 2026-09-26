@@ -14,6 +14,7 @@ const groupSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
   }],
+  admins: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   visibleMembers: [{  // 🔥 NEW: Only these users see messages
     type: mongoose.Schema.Types.ObjectId,
     ref: "User"
