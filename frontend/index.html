@@ -463,7 +463,11 @@ body {
       <div id="visibleMembers" class="info-box" style="min-height:36px;font-size:12px;"></div>
       
 <div id="addMemberSection">
-  <input class="auth-input" id="newMember" placeholder="Add member by ID" style="margin-top:8px;">
+  <input class="auth-input" id="newMember" 
+    placeholder="Search name or email to add..."
+    oninput="searchUsers(this.value)" 
+    style="margin-top:8px;">
+  <div id="userSearchResults"></div>
   <div class="btn-row" style="margin-top:4px;">
     <button class="btn btn-warning" onclick="addMemberToGroup()" style="font-size:12px;">+ Add</button>
     <button class="btn btn-teal" onclick="toggleMemberVisibility()" style="font-size:12px;">🔒 Privacy</button>
@@ -487,9 +491,15 @@ body {
         <!-- Key input with hidden text (dots) -->
         <input class="key-input-hidden" id="keyInput" placeholder="Paste group key here" type="password">
         <div class="btn-row" style="margin-top:4px;">
-          <button class="btn btn-teal" onclick="importKeyFromInput()" style="font-size:12px;">📥 Import</button>
-          <button class="btn btn-success" onclick="exportCurrentKey()" style="font-size:12px;">📤 Copy Key</button>
-        </div>
+  <button class="btn btn-teal" onclick="importKeyFromInput()" style="font-size:12px;">📥 Import</button>
+  <button class="btn btn-success" onclick="exportCurrentKey()" style="font-size:12px;">📤 Copy Key</button>
+</div>
+
+<!-- ✅ ADD THIS RIGHT HERE -->
+<div style="font-size:10px;color:#475569;margin-top:8px;line-height:1.4;">
+  🔐 Keys never leave your browser. Server only stores encrypted data.
+  Share keys via WhatsApp/Signal only — never through this app.
+</div>
       </div>
     </div>
   </div>
@@ -730,12 +740,18 @@ function createGroup() {
   var n = document.getElementById("groupName").value.trim();
   if (!token || !n) return alert("Login and enter a group name");
   fetch("https://stealthchat-1.onrender.com/api/groups", {
-    method:"POST",
-    headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
     body: JSON.stringify({ name: n })
   })
-  .then(function(r){ if(r.ok){ alert("Group created!"); document.getElementById("groupName").value=""; loadGroups(); } })
-  .catch(function(err){ alert("Error: "+err.message); });
+  .then(function(r) { return r.json().then(function(d) { return { s: r.status, d: d }; }); })
+  .then(function(r) {
+    if (r.s !== 201) return alert(r.d.message || "Failed to create group");
+    alert("Group created!");
+    document.getElementById("groupName").value = "";
+    loadGroups();
+  })
+  .catch(function(err) { alert("Error: " + err.message); });
 }
 
 // ── Connect Group ───────────────────────────────────────────
@@ -919,14 +935,57 @@ function loadGroupMembers() {
   })
   .catch(function(err) { console.error(err); });
 }
+var selectedMemberId = "";
+
+function searchUsers(query) {
+  var results = document.getElementById("userSearchResults");
+  if (!query || query.length < 2) { results.innerHTML = ""; return; }
+
+  fetch("https://stealthchat-1.onrender.com/api/auth/search?q=" + encodeURIComponent(query), {
+    headers: { "Authorization": "Bearer " + token }
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(users) {
+    results.innerHTML = "";
+    if (!users.length) {
+      results.innerHTML = '<div style="padding:8px;color:#64748b;font-size:12px;">No users found</div>';
+      return;
+    }
+    users.forEach(function(u) {
+      var item = document.createElement("div");
+      item.style.cssText = "padding:8px 10px;cursor:pointer;border-radius:8px;" +
+        "font-size:12px;color:#e2e8f0;background:rgba(255,255,255,0.04);margin:2px 0;";
+      item.textContent = u.name + " · " + u.email;
+      item.onmouseover = function() { item.style.background = "rgba(124,58,237,0.2)"; };
+      item.onmouseout  = function() { item.style.background = "rgba(255,255,255,0.04)"; };
+      item.onclick = function() {
+        selectedMemberId = u._id;
+        document.getElementById("newMember").value = u.name + " (" + u.email + ")";
+        results.innerHTML = "";
+      };
+      results.appendChild(item);
+    });
+  });
+}
+
 function addMemberToGroup() {
-  var val = document.getElementById("newMember").value.trim();
-  if(!currentGroup||!val) return alert("Select group and enter member ID");
-  fetch("https://stealthchat-1.onrender.com/api/groups/add-member",{
-    method:"PUT", headers:{"Content-Type":"application/json","Authorization":"Bearer "+token},
-    body: JSON.stringify({groupId:currentGroup,userId:val})
-  }).then(function(){ alert("Member added!"); document.getElementById("newMember").value=""; loadGroupMembers(); })
-  .catch(function(err){ alert("Error: "+err.message); });
+  var userId = selectedMemberId;
+  if (!currentGroup || !userId) return alert("Search and select a member first");
+  fetch("https://stealthchat-1.onrender.com/api/groups/add-member", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+    body: JSON.stringify({ groupId: currentGroup, userId: userId })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    alert(d.message);
+    if (d.message === "Member added successfully") {
+      document.getElementById("newMember").value = "";
+      selectedMemberId = "";
+      loadGroupMembers();
+    }
+  })
+  .catch(function(err) { alert("Error: " + err.message); });
 }
 function makeAdmin(groupId, userId, name) {
   if (!confirm("Make " + name + " an admin?")) return;

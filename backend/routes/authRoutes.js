@@ -43,5 +43,21 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
+// SEARCH USERS
+router.get("/search", authMiddleware, async (req, res) => {
+  try {
+    const q = req.query.q;
+    if (!q || q.length < 2) return res.json([]);
+    const users = await User.find({
+      $or: [
+        { name: { $regex: q, $options: "i" } },
+        { email: { $regex: q, $options: "i" } }
+      ],
+      _id: { $ne: req.user.id } // don't show yourself
+    }).select("name email _id").limit(8);
+    res.json(users);
+  } catch(err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 module.exports = router;

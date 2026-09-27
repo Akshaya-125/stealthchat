@@ -21,6 +21,15 @@ router.get("/my", authMiddleware, async (req, res) => {
 // CREATE GROUP
 router.post("/", authMiddleware, async (req, res) => {
   try {
+    // ✅ Check if group name already exists for this user
+    const existing = await Group.findOne({
+      name: req.body.name,
+      members: req.user.id
+    });
+    if (existing) {
+      return res.status(400).json({ message: "You already have a group with this name" });
+    }
+
     const group = await Group.create({
       name: req.body.name,
       createdBy: req.user.id,
